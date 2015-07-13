@@ -21,8 +21,16 @@ body {
 
     .info {
         flex-grow: 0;
-        width: 300px;
+        width: 420px;
         padding: 0 20px 0 20px;
+
+        dt {
+            width: 100px;
+        }
+
+        dd {
+            margin-left: 110px;
+        }
     }
 
     .search {
