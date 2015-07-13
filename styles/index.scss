@@ -1,0 +1,153 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #211D26;
+    color: #736B7B;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.content {
+    height: 100%;
+    display: flex;
+    background: url("tenshi.png") bottom left no-repeat;
+    background-size: 300px;
+
+    .info {
+        flex-grow: 0;
+        width: 300px;
+        padding: 0 20px 0 20px;
+    }
+
+    .search {
+        flex-grow: 1;
+        padding: 0 20px 0 20px;
+
+        .form-control {
+            border-radius: 0;
+            max-width: 40%;
+            background: none;
+            border-color: #736B7B;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-items: flex-start;
+        }
+    }
+
+    .queue {
+        box-shadow: 0 0 3px 3px #111;
+
+        max-height: 100%;
+        overflow-y: hidden;
+        min-width: 300px;
+        background: #37333B;
+        flex-grow: 0;
+
+        h3 {
+            small {
+                font-size: 10pt;
+                color: #504A56;
+            }
+        }
+
+        .padded {
+            padding: 0 20px 0 20px;
+        }
+    }
+
+    .items {
+        .item {
+            background: #423b47;
+            padding: 5px 20px;
+
+            &:nth-child(even) {
+                background: #37333B;
+            }
+        }
+    }
+}
+
+.result {
+    margin: 15px;
+    padding: 5px;
+    height: 110px;
+    width: 250px;
+    display: flex;
+
+    img {
+        padding-right: 10px;
+        width: 100px;
+        height: 100px;
+        flex-grow: 0;
+    }
+
+    & > div {
+        flex-grow: 1;
+
+        p {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    button {
+        margin-top: 9px;
+        background-color: #3a2499;
+        border: none;
+    }
+}
+
+.now-playing {
+    min-height: 100px;
+    margin-bottom: 10px;
+    display: flex;
+
+    img {
+        padding-right: 10px;
+        width: 100px;
+        height: 100px;
+        flex-grow: 0;
+    }
+
+    & > div {
+        flex-grow: 1;
+
+        p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .progress {
+            margin-bottom: 0;
+            border-radius: 0;
+            background-color: #555158;
+
+            .progress-bar {
+                background-color: #7A757E;
+            }
+        }
+    }
+}
+
+pre {
+    background: #423B47;
+    color: #fff;
+}
+
+.drop-target {
+    border-radius: 5px;
+    border: 3px dashed #fff;
+    padding: 40px;
+    text-align: center;
+}
