@@ -4,7 +4,7 @@
 # - coffeescript
 # Run `make` to compile static assets
 
-.PHONY: all static watch clean
+.PHONY: all static clean
 
 STYLES:=$(patsubst styles/%.scss,static/css/%.css,$(wildcard styles/*.scss))
 STYLES+=$(patsubst styles/%.css,static/css/%.css,$(wildcard styles/*.css))
@@ -33,6 +33,10 @@ static/js/%.js: scripts/%.coffee
 	coffee -m -o static/ -c $<
 
 static: $(STYLES) $(SCRIPTS) $(IMAGES)
+	go build -o tenshi src/main.go src/hub.go src/conn.go
+
+run: $(STYLES) $(SCRIPTS) $(IMAGES)
+	go run src/main.go src/hub.go src/conn.go
 
 all: static
 	echo $(STYLES)
