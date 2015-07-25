@@ -1,13 +1,17 @@
 package main
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"fmt"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hoisie/web"
 	"html/template"
 	"io/ioutil"
+	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,25 +20,76 @@ var musicDir string = "/home/eumen/Music"
 
 func main() {
 	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
+
 	if err != nil {
 		fmt.Println("Error: could not connect to MPD, exiting")
 		os.Exit(1)
 	}
+	defer conn.Close()
+
+	w, err := mpd.NewWatcher("tcp", "127.0.0.1:6600", "", "player")
+	if err != nil {
+		fmt.Println("Error: could not connect to MPD, exiting")
+		os.Exit(1)
+	}
+	defer w.Close()
+
+	h := newHub()
+	go h.run()
+
+	// Log errors.
+	go func() {
+		for err := range w.Error {
+			log.Println("Error:", err)
+		}
+	}()
+
+	//Control song transitions -- During this time, update the websockets
+	go func() {
+		var status mpd.Attrs
+		for _ = range w.Event {
+			status, _ = conn.Status()
+			pos, _ := strconv.ParseFloat(status["elapsed"], 64)
+			fmt.Println(pos)
+			if pos == 0.000 {
+				//Stop us from getting into an infinite loop by waiting 25 ms
+				time.Sleep(25 * time.Millisecond)
+				//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
+				conn.Pause(true)
+				//Wait 3 seconds then resume next song
+				time.Sleep(3000 * time.Millisecond)
+				conn.Pause(false)
+				song, _ := conn.CurrentSong()
+				h.broadcast <- []byte(song["Title"])
+			}
+		}
+	}()
+
 	song, err := conn.CurrentSong()
 	if err != nil {
 		fmt.Println("No Song!")
 	} else {
 		fmt.Println(song["Title"])
 	}
+	songs, err := conn.ListAllInfo("/")
+	shuffle(songs)
+	subset := songs[:20]
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
+	//Returns main page with custom selection of songs
 	web.Get("/", func(ctx *web.Context) string {
-		return getIndex(ctx, conn)
+		return getIndex(ctx, subset)
 	})
+	//Returns a raw song
+	web.Get("/song/(.+)", getSong)
+	//Handle the websocket
+	web.Websocket("/ws", websocket.Handler(func(ws *websocket.Conn) {
+		handleSocket(ws, h)
+	}))
 	web.Run("0.0.0.0:8080")
 }
 
-func getIndex(ctx *web.Context, conn *mpd.Client) string {
+func getIndex(ctx *web.Context, songs []mpd.Attrs) string {
 	funcMap := template.FuncMap{
 		"AlbumDir": GetAlbumDir,
 	}
@@ -43,13 +98,35 @@ func getIndex(ctx *web.Context, conn *mpd.Client) string {
 		fmt.Println("Couldn't parse template! Error: " + err.Error())
 	}
 	t = t.Funcs(funcMap)
-	songs, err := conn.ListAllInfo("/")
 	if err != nil {
 		fmt.Println("Couldn't parse template! Error: " + err.Error())
 	}
 	if err = t.Execute(ctx.ResponseWriter, songs); err != nil {
 		fmt.Println("Couldn't execute template! Error: " + err.Error())
 	}
+	return ""
+}
+
+func getSong(ctx *web.Context, songLoc string) string {
+	song := musicDir + "/" + songLoc
+	f, err := os.Open(song)
+	if err != nil {
+		return "Error reading file!\n"
+	}
+
+	//Get MIME
+	r, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "Error reading file!\n"
+	}
+	mime := http.DetectContentType(r)
+
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		return "Error reading the file\n"
+	}
+	ctx.ContentType(mime)
+	http.ServeContent(ctx.ResponseWriter, ctx.Request, song, time.Now(), f)
 	return ""
 }
 
@@ -60,35 +137,7 @@ func getCover(ctx *web.Context, album string) string {
 		cover = dir + "/cover.jpg"
 	} else if exists(dir + "/cover.png") {
 		cover = dir + "/cover.png"
-	} /* else {
-		//Search one subdir deep for stuff
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			fmt.Println(err)
-		}
-		for _, file := range files {
-			f, err := os.Open(dir + "/" + file.Name())
-			if err != nil {
-				fmt.Println(err)
-				//break
-			}
-			fi, err := f.Stat()
-			if err != nil {
-				fmt.Println(err)
-				//break
-			}
-			if fi.Mode().IsDir() {
-				dir = dir + "/" + file.Name()
-				if exists(dir + "/cover.jpg") {
-					cover = dir + "/cover.jpg"
-				} else if exists(dir + "/cover.png") {
-					cover = dir + "/cover.png"
-				}
-				break
-			}
-		}
 	}
-	*/
 	//Open the file
 	f, err := os.Open(cover)
 	if err != nil {
@@ -114,8 +163,17 @@ func getCover(ctx *web.Context, album string) string {
 	return ""
 }
 
+func shuffle(arr []mpd.Attrs) {
+	t := time.Now()
+	rand.Seed(int64(t.Nanosecond())) // no shuffling without this line
+
+	for i := len(arr) - 1; i > 0; i-- {
+		j := rand.Intn(i)
+		arr[i], arr[j] = arr[j], arr[i]
+	}
+}
+
 func GetAlbumDir(song string) string {
-	fmt.Println(song)
 	return strings.SplitAfterN(song, "/", 2)[0]
 }
 

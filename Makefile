@@ -2,39 +2,37 @@
 # Depends on:
 # - scss
 # - coffeescript
-# - inotify-tools
 # Run `make` to compile static assets
-# Run `make watch` to recompile whenever a change is made
 
 .PHONY: all static watch clean
 
-STYLES:=$(patsubst styles/%.scss,static/%.css,$(wildcard styles/*.scss))
-STYLES+=$(patsubst styles/%.css,static/%.css,$(wildcard styles/*.css))
-SCRIPTS:=$(patsubst scripts/%.coffee,static/%.js,$(wildcard scripts/*.coffee))
-SCRIPTS+=$(patsubst scripts/%.js,static/%.js,$(wildcard scripts/*.js))
-_STATIC:=$(patsubst _static/%,static/%,$(wildcard _static/*))
+STYLES:=$(patsubst styles/%.scss,static/css/%.css,$(wildcard styles/*.scss))
+STYLES+=$(patsubst styles/%.css,static/css/%.css,$(wildcard styles/*.css))
+SCRIPTS:=$(patsubst scripts/%.coffee,static/js/%.js,$(wildcard scripts/*.coffee))
+SCRIPTS+=$(patsubst scripts/%.js,static/js/%.js,$(wildcard scripts/*.js))
+IMAGES:=$(patsubst image/%,static/image/%,$(wildcard image/*))
 
-static/%: _static/%
-	@mkdir -p static/
+static/image/%: image/%
+	@mkdir -p static/image/
 	cp $< $@
 
-static/%.css: styles/%.css
-	@mkdir -p static/
+static/css/%.css: styles/%.css
+	@mkdir -p static/css
 	cp $< $@
 
-static/%.css: styles/%.scss
-	@mkdir -p static/
+static/css/%.css: styles/%.scss
+	@mkdir -p static/css
 	scss -I styles/ $< $@
 
-static/%.js: scripts/%.js
-	@mkdir -p static/
+static/js/%.js: scripts/%.js
+	@mkdir -p static/js
 	cp $< $@
 
-static/%.js: scripts/%.coffee
-	@mkdir -p static/
+static/js/%.js: scripts/%.coffee
+	@mkdir -p static/js
 	coffee -m -o static/ -c $<
 
-static: $(STYLES) $(SCRIPTS) $(_STATIC)
+static: $(STYLES) $(SCRIPTS) $(IMAGES)
 
 all: static
 	echo $(STYLES)
@@ -42,10 +40,3 @@ all: static
 
 clean:
 	rm -rf static
-
-watch:
-	while inotifywait \
-		-e close_write scripts/ \
-		-e close_write styles/ \
-		-e close_write _static/; \
-		do make; done
