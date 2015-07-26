@@ -2,9 +2,10 @@
 # Depends on:
 # - scss
 # - coffeescript
-# Run `make` to compile static assets
+# Run `make` to compile static assets and produce an executable binary which will start tenshi
+# Run `make run` to compile static assets and run tenshi
 
-.PHONY: all static clean
+.PHONY: all static clean run
 
 STYLES:=$(patsubst styles/%.scss,static/css/%.css,$(wildcard styles/*.scss))
 STYLES+=$(patsubst styles/%.css,static/css/%.css,$(wildcard styles/*.css))

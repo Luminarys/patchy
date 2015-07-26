@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"encoding/json"
 	"fmt"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hoisie/web"
@@ -48,7 +49,23 @@ func main() {
 	go func() {
 		var status mpd.Attrs
 		for _ = range w.Event {
-			status, _ = conn.Status()
+			status, err = conn.Status()
+			if err != nil {
+				//Connections seem to drop often, so reconnect when this happens
+				fmt.Println("Couldn't get current status! Error: " + err.Error())
+				conn.Close()
+
+				fmt.Println("Reconnecting...")
+				conn, err = mpd.Dial("tcp", "127.0.0.1:6600")
+
+				if err != nil {
+					fmt.Println("Error: could not connect to MPD, exiting")
+					os.Exit(1)
+				}
+				defer conn.Close()
+
+				status, err = conn.Status()
+			}
 			pos, _ := strconv.ParseFloat(status["elapsed"], 64)
 			fmt.Println(pos)
 			if pos == 0.000 {
@@ -59,8 +76,15 @@ func main() {
 				//Wait 3 seconds then resume next song
 				time.Sleep(3000 * time.Millisecond)
 				conn.Pause(false)
-				song, _ := conn.CurrentSong()
-				h.broadcast <- []byte(song["Title"])
+				song, err := conn.CurrentSong()
+				if err != nil {
+					fmt.Println("Couldn't get current song! Error: " + err.Error())
+				} else {
+					//Serialize and send info
+					msg := map[string]string{"cmd": "NP", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"])}
+					jsonMsg, _ := json.Marshal(msg)
+					h.broadcast <- []byte(jsonMsg)
+				}
 			}
 		}
 	}()
@@ -86,6 +110,10 @@ func main() {
 	web.Websocket("/ws", websocket.Handler(func(ws *websocket.Conn) {
 		handleSocket(ws, h)
 	}))
+	web.Get("/library", func(ctx *web.Context) string {
+		jsonMsg, _ := json.Marshal(subset)
+		return string(jsonMsg)
+	})
 	web.Run("0.0.0.0:8080")
 }
 

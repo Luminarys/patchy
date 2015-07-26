@@ -37,40 +37,22 @@
                 <h1>Request Tunes</h1>
                 <input class="form-control" placeholder="Search" />
                 <div class="search-results">
-                    {{ range $index, $value := . }}
-                        <div class="result">
-                            <img src='/art/{{index $value "file" | AlbumDir }}' alt="Album art" />
-                            <div>
-                                <p><strong>{{index $value "Title"}}</strong></p>
-                                <p>by <strong>{{index $value "Artist"}}</strong></p>
-                                <button class="btn btn-primary btn-block">Request</button>
-                            </div>
-                        </div>
-                    {{ end }}
-                    <div class="result">
-                        <img src="image/album.png" alt="Album art" />
-                        <div>
-                            <p><strong>ゆるやかに</strong></p>
-                            <p>by <strong>Kikuo</strong></p>
-                            <p>from <strong>きくおミク4</strong></p>
-                            <button class="btn btn-primary btn-block">Request</button>
-                        </div>
-                    </div>
+                    <!--
                     <div class="result"></div><div class="result"></div>
                     <div class="result"></div><div class="result"></div>
                     <div class="result"></div><div class="result"></div>
-                    <div class="result"></div><div class="result"></div>
+                    <div class="result"></div><div class="result"></div-->
                 </div>
             </div>
             <div class="queue">
                 <div class="padded">
                     <h3>Now playing <small>for 12 listeners</small></h3>
                     <div class="now-playing">
-                        <img src="image/album.png" alt="Album art" />
+                        <img id="npArt" src="image/album.png" alt="Album art" />
                         <div>
-                            <p><strong>ゆるやかに</strong></p>
-                            <p>by <strong>Kikuo</strong></p>
-                            <p>from <strong>きくおミク4</strong></p>
+                            <p><strong id="npSong">ゆるやかに</strong></p>
+                            <p>by <strong id="npArtist">Kikuo</strong></p>
+                            <p>from <strong id="npAlbum">きくおミク4</strong></p>
                             <div class="timestamp">
                                 <p><strong>1:23</strong> of 2:48</p>
                                 <div class="progress">
