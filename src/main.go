@@ -20,8 +20,9 @@ import (
 var musicDir string = "/home/eumen/Music"
 
 func main() {
+	var conn *mpd.Client
+	fmt.Println("Connecting to MPD")
 	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
-
 	if err != nil {
 		fmt.Println("Error: could not connect to MPD, exiting")
 		os.Exit(1)
@@ -57,7 +58,6 @@ func main() {
 
 				fmt.Println("Reconnecting...")
 				conn, err = mpd.Dial("tcp", "127.0.0.1:6600")
-
 				if err != nil {
 					fmt.Println("Error: could not connect to MPD, exiting")
 					os.Exit(1)
@@ -81,7 +81,7 @@ func main() {
 					fmt.Println("Couldn't get current song! Error: " + err.Error())
 				} else {
 					//Serialize and send info
-					msg := map[string]string{"cmd": "NP", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"])}
+					msg := map[string]string{"cmd": "NP", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"]), "Time": song["Time"]}
 					jsonMsg, _ := json.Marshal(msg)
 					h.broadcast <- []byte(jsonMsg)
 				}
@@ -112,7 +112,24 @@ func main() {
 
 	//Returns the JSON info for the currently playing song
 	web.Get("/np", func(ctx *web.Context) string {
-		song, _ := conn.CurrentSong()
+		song, err := conn.CurrentSong()
+		if err != nil {
+			fmt.Println("Couldn't get current status! Error: " + err.Error())
+			conn.Close()
+
+			fmt.Println("Reconnecting...")
+			conn, err = mpd.Dial("tcp", "127.0.0.1:6600")
+			if err != nil {
+				fmt.Println("Error: could not connect to MPD, exiting")
+				os.Exit(1)
+			}
+			song, _ = conn.CurrentSong()
+		}
+		status, _ := conn.Status()
+		fmt.Println(status)
+		ctime := strings.SplitAfterN(status["time"], ":", 2)[0]
+		last := len(ctime) - 1
+		song["ctime"] = ctime[:last]
 		jsonMsg, _ := json.Marshal(song)
 		return string(jsonMsg)
 	})
@@ -172,10 +189,15 @@ func getSong(ctx *web.Context, songLoc string) string {
 func getCover(ctx *web.Context, album string) string {
 	dir := musicDir + "/" + album
 	cover := "static/image/missing.png"
+	//Do various searches -- Optimally this should do a full traversal and find one of these names
 	if exists(dir + "/cover.jpg") {
 		cover = dir + "/cover.jpg"
 	} else if exists(dir + "/cover.png") {
 		cover = dir + "/cover.png"
+	} else if exists(dir + "/folder.png") {
+		cover = dir + "/folder.png"
+	} else if exists(dir + "/folder.jpg") {
+		cover = dir + "/folder.jpg"
 	}
 	//Open the file
 	f, err := os.Open(cover)

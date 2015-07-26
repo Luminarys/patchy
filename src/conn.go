@@ -17,12 +17,12 @@ type connection struct {
 
 //Reads in requests from the clients
 func (c *connection) reader() {
+	var msg string
 	for {
-		_, message, err := c.ws.ReadMessage()
-		if err != nil {
+		if err := websocket.Message.Receive(c.ws, &msg); err != nil {
 			break
 		}
-		c.h.broadcast <- message
+		c.h.broadcast <- []byte(msg)
 	}
 	c.ws.Close()
 }

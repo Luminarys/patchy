@@ -1,5 +1,9 @@
+var ctime = 0
+var stime = 0
+var songProg
+
 $(document).ready(function(){
-    //Load jplayer
+    //Load streaming jplayer
     $("#player-1").jPlayer({
         ready: function () {
         $(this).jPlayer("setMedia", {
@@ -19,6 +23,12 @@ $(document).ready(function(){
         $("#npSong").text(song["Title"])
         $("#npArtist").text(song["Artist"])
         $("#npAlbum").text(song["Album"])
+        $("#songTime").text(secToMin(song["Time"]))
+        stime = parseInt(song["Time"])
+        $("#curTime").text(secToMin(song["ctime"]))
+        ctime = parseInt(song["ctime"])
+        $("#songProgress").css("width", (100 * parseInt(song["ctime"])/parseInt(song["Time"])).toString() + "%")
+        songProg = window.setInterval(updateSong, 1000);
     });
 
     //Load Library
@@ -41,10 +51,34 @@ $(document).ready(function(){
         var cmd = JSON.parse(evt.data)
         //Update now playing
         if(cmd["cmd"] == "NP"){
+            window.clearInterval(songProg)
             $("#npArt").attr("src", cmd["Cover"])
             $("#npSong").text(cmd["Title"])
             $("#npArtist").text(cmd["Artist"])
             $("#npAlbum").text(cmd["Album"])
+            $("#songTime").text(secToMin(cmd["Time"]))
+            $("#songProgress").css("width", "0%")
+            stime = parseInt(cmd["Time"])
+            ctime = 0
+            songProg = window.setInterval(updateSong, 1000);
         }
     }
 });
+
+function secToMin(seconds){
+    seconds = parseInt(seconds)
+    var min = Math.floor(seconds/60);
+    var rsecs = seconds - min * 60
+    if (rsecs < 10){
+        return min.toString() + ":0" + rsecs.toString();
+    }else{
+        return min.toString() + ":" + rsecs.toString();
+    }
+}
+
+function updateSong() {
+    ctime++
+    $("#curTime").text(secToMin(ctime))
+    $("#songProgress").css("width", (100 * parseInt(ctime)/parseInt(stime)).toString() + "%")
+
+}
