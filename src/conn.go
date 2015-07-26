@@ -15,7 +15,8 @@ type connection struct {
 	h *hub
 }
 
-/*func (c *connection) reader() {
+//Reads in requests from the clients
+func (c *connection) reader() {
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
@@ -24,8 +25,9 @@ type connection struct {
 		c.h.broadcast <- message
 	}
 	c.ws.Close()
-}*/
+}
 
+//Sends broadcasts to clients
 func (c *connection) writer() {
 	for message := range c.send {
 		err := websocket.Message.Send(c.ws, string(message))
@@ -36,9 +38,11 @@ func (c *connection) writer() {
 	c.ws.Close()
 }
 
+//Socket handler -- Creates a new connection for each client
 func handleSocket(ws *websocket.Conn, hub *hub) {
 	c := &connection{send: make(chan []byte, 256), ws: ws, h: hub}
 	c.h.register <- c
 	defer func() { c.h.unregister <- c }()
-	c.writer()
+	go c.writer()
+	c.reader()
 }
