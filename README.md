@@ -12,7 +12,7 @@ Usage instructions to come once this software is more mature.
 #Things Done:
 * Load in music library
 * Setup websockets
-* Updated Now Playing using websocket
+* Update Now Playing using websocket
 
 
 #Things to Do:
