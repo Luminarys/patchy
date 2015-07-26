@@ -50,20 +50,32 @@ $(document).ready(function(){
         console.log(evt.data)
         var cmd = JSON.parse(evt.data)
         //Update now playing
-        if(cmd["cmd"] == "NP"){
-            window.clearInterval(songProg)
-            $("#npArt").attr("src", cmd["Cover"])
-            $("#npSong").text(cmd["Title"])
-            $("#npArtist").text(cmd["Artist"])
-            $("#npAlbum").text(cmd["Album"])
-            $("#songTime").text(secToMin(cmd["Time"]))
-            $("#songProgress").css("width", "0%")
-            stime = parseInt(cmd["Time"])
-            ctime = 0
-            songProg = window.setInterval(updateSong, 1000);
+        if(cmd["cmd"] == "done"){
+            newSong(cmd)
+        }
+        //Pause over, start next song
+        if(cmd["cmd"] == "NS"){
+            startSong()
         }
     }
 });
+
+function newSong(song) {
+    window.clearInterval(songProg)
+    $("#npArt").attr("src", song["Cover"])
+    $("#npSong").text(song["Title"])
+    $("#npArtist").text(song["Artist"])
+    $("#npAlbum").text(song["Album"])
+    $("#songTime").text(secToMin(song["Time"]))
+    $("#curTime").text(secToMin("0"))
+    $("#songProgress").css("width", "0%")
+    stime = parseInt(song["Time"])
+    ctime = 0
+}
+
+function startSong() {
+     songProg = window.setInterval(updateSong, 1000);
+}
 
 function secToMin(seconds){
     seconds = parseInt(seconds)

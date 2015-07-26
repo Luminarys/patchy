@@ -67,23 +67,32 @@ func main() {
 				status, err = conn.Status()
 			}
 			pos, _ := strconv.ParseFloat(status["elapsed"], 64)
-			fmt.Println(pos)
 			if pos == 0.000 {
 				//Stop us from getting into an infinite loop by waiting 25 ms
 				time.Sleep(25 * time.Millisecond)
+				song, err := conn.CurrentSong()
+
 				//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
+				//Let clients know that the current song is done and that we'll be pausing.
+				//Also give them info about the next song to be played
+				//During this time, clients that have not done so will transfer from livestream to downloads
+				msg := map[string]string{"cmd": "done", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"]), "Time": song["Time"]}
+				jsonMsg, _ := json.Marshal(msg)
+				h.broadcast <- []byte(jsonMsg)
+
 				conn.Pause(true)
+
 				//Wait 3 seconds then resume next song
 				time.Sleep(3000 * time.Millisecond)
-				conn.Pause(false)
-				song, err := conn.CurrentSong()
+
 				if err != nil {
 					fmt.Println("Couldn't get current song! Error: " + err.Error())
 				} else {
-					//Serialize and send info
-					msg := map[string]string{"cmd": "NP", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"]), "Time": song["Time"]}
+					//Tell clients to begin the song
+					msg = map[string]string{"cmd": "NS"}
 					jsonMsg, _ := json.Marshal(msg)
 					h.broadcast <- []byte(jsonMsg)
+					conn.Pause(false)
 				}
 			}
 		}

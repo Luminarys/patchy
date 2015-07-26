@@ -13,11 +13,11 @@ Usage instructions to come once this software is more mature.
 * Load in music library
 * Setup websockets
 * Update Now Playing using websocket
+* Implement the music timer properly 
 
 
 #Things to Do:
-* Implement the music timer properly 
+* Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays using an initial mpd stream.
 * Implement the Queue properly
 * Implement client requests
-* Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays using an initial mpd stream.
 * Implement client music uploads
