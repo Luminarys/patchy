@@ -10,6 +10,17 @@ $(document).ready(function(){
         supplied: "oga",
         volume: 0.3
     });
+
+    //Load now playing
+    $.get("/np", function(data) {
+        var song = JSON.parse(data)
+        console.log(song)
+        $("#npArt").attr("src", "/art/" + song["file"].split("/")[0])
+        $("#npSong").text(song["Title"])
+        $("#npArtist").text(song["Artist"])
+        $("#npAlbum").text(song["Album"])
+    });
+
     //Load Library
     $.get("/library", function(data) {
         var songs = JSON.parse(data)
@@ -17,7 +28,10 @@ $(document).ready(function(){
             $(".search-results").append('<div class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + song["Title"] + '</strong></p><p>by <strong>' + song["Artist"] + '</strong></p><p>from <strong>' + song["Album"] +' </strong></p><button class="btn btn-primary btn-block">Request</button></div></div>')
         }); 
     });
+
     $(".result").slice(20).hide();
+
+    //Initialize Websocket
     conn = new WebSocket("ws:///localhost:8080/ws");
     conn.onclose = function(evt) {
         console.log("WS closed")

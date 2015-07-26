@@ -98,14 +98,25 @@ func main() {
 	songs, err := conn.ListAllInfo("/")
 	shuffle(songs)
 	subset := songs[:20]
+
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
+
 	//Returns main page with custom selection of songs
 	web.Get("/", func(ctx *web.Context) string {
 		return getIndex(ctx, subset)
 	})
+
 	//Returns a raw song
 	web.Get("/song/(.+)", getSong)
+
+	//Returns the JSON info for the currently playing song
+	web.Get("/np", func(ctx *web.Context) string {
+		song, _ := conn.CurrentSong()
+		jsonMsg, _ := json.Marshal(song)
+		return string(jsonMsg)
+	})
+
 	//Handle the websocket
 	web.Websocket("/ws", websocket.Handler(func(ws *websocket.Conn) {
 		handleSocket(ws, h)
