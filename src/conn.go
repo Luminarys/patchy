@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"fmt"
 )
 
 type connection struct {
@@ -30,6 +31,7 @@ func (c *connection) reader() {
 //Sends broadcasts to clients
 func (c *connection) writer() {
 	for message := range c.send {
+		fmt.Println("Sending a message to a connection")
 		err := websocket.Message.Send(c.ws, string(message))
 		if err != nil {
 			break

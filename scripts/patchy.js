@@ -5,17 +5,6 @@ var songProg
 var cPlayer = 1
 
 $(document).ready(function(){
-    //Load streaming jplayer
-    $("#player-1").jPlayer({
-        ready: function () {
-        $(this).jPlayer("setMedia", {
-            mp3: "http://localhost:8001"
-        }).jPlayer("play");
-        },
-        supplied: "mp3",
-        volume: 0.3
-    });
-    console.log("Initialized Player1 using MPD stream")
 
 
     //Load now playing
@@ -36,13 +25,28 @@ $(document).ready(function(){
         }else{
             var nfile = 1
         }
+
+        //Load init jplayer
+        $("#player-1").jPlayer({
+            ready: function () {
+            $(this).jPlayer("setMedia", {
+                mp3: "/queue/ns" + cfile + ".mp3?" + randString()
+            }).jPlayer("play", ctime);
+            },
+            supplied: "mp3",
+            preload: "auto",
+            volume: 0.3
+        });
+
+        console.log("Initialized and started Player1 using file /queue/ns" + cfile + ".mp3")
+
         $("#songProgress").css("width", (100 * parseInt(song["ctime"])/parseInt(song["Time"])).toString() + "%")
         songProg = window.setInterval(updateSong, 1000);
 
         $("#player-2").jPlayer({
             ready: function () {
             $(this).jPlayer("setMedia", {
-                mp3: "/queue/ns" + nfile + ".mp3"
+                mp3: "/queue/ns" + nfile + ".mp3?" + randString()
             });
             },
             supplied: "mp3",
@@ -85,6 +89,7 @@ $(document).ready(function(){
 function newSong(song) {
     $("#player-1").jPlayer("stop")
     $("#player-2").jPlayer("stop")
+
     var ns = $("#ns").attr("val")
     if(ns == 1){
         ns = 2
@@ -92,15 +97,18 @@ function newSong(song) {
         ns = 1
     }
     $("#ns").attr("val", ns.toString())
+    var nf = "/queue/ns" + ns.toString() + ".mp3?" + randString()
     
     if(cPlayer == 1){
+        $("#player-1").jPlayer("clearMedia")
         $("#player-1").jPlayer("setMedia", {
-                mp3: "/queue/ns" + ns.toString() + ".mp3"
+                mp3: nf
         });
         console.log("Set Player1 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
     }else{
+        $("#player-2").jPlayer("clearMedia")
         $("#player-2").jPlayer("setMedia", {
-                mp3: "/queue/ns" + ns.toString() + ".mp3"
+                mp3: nf
         });
         console.log("Set Player2 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
     }
@@ -144,10 +152,20 @@ function secToMin(seconds){
 }
 
 function updateSong() {
-    if(ctime <= stime){
+    if(ctime < stime){
         ctime++
         $("#curTime").text(secToMin(ctime))
         $("#songProgress").css("width", (100 * parseInt(ctime)/parseInt(stime)).toString() + "%")
     }
 
+}
+
+function randString() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
 }

@@ -14,7 +14,7 @@ Usage instructions to come once this software is more mature.
 * Setup websockets
 * Update Now Playing using websocket
 * Implement the music timer properly 
-* Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays using an initial mpd stream. N.B. Something goes wrong in Firefox that results in a cached song being played instead of the next one.
+* Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays the song it prev. loaded
 
 
 #Things to Do:

@@ -100,14 +100,14 @@ func main() {
 				status, err = conn.Status()
 			}
 			pos, _ := strconv.ParseFloat(status["elapsed"], 64)
-			if pos == 0.000 {
+			if pos == 0.000 && status["state"] == "play" {
 				//Stop us from getting into an infinite loop by waiting 25 ms
-				time.Sleep(25 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				song, err := conn.CurrentSong()
 				//Prep next song
 				queuePos++
 				fmt.Println("Next song:")
-				fmt.Println(queue[queuePos])
+				fmt.Println(queue[queuePos+1])
 				fmt.Println("The file to be replaced with the next song is:" + strconv.Itoa(cFile))
 				//If cFile is 1, then the just finished song used ns1, otherwise it was using ns2.mp3
 				if cFile == 1 {
@@ -132,8 +132,8 @@ func main() {
 
 				conn.Pause(true)
 
-				//Wait 5 seconds for clients to load the next song if necessary, then resume next song
-				time.Sleep(5000 * time.Millisecond)
+				//Wait 3 seconds for clients to load the next song if necessary, then resume next song
+				time.Sleep(1000 * time.Millisecond)
 
 				if err != nil {
 					fmt.Println("Couldn't get current song! Error: " + err.Error())
