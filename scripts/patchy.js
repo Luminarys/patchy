@@ -1,19 +1,22 @@
 var ctime = 0
 var stime = 0
 var songProg
+//Player currently in use
+var cPlayer = 1
 
 $(document).ready(function(){
     //Load streaming jplayer
     $("#player-1").jPlayer({
         ready: function () {
         $(this).jPlayer("setMedia", {
-            title: "Bubble",
-            oga: "http://localhost:8001"
+            mp3: "http://localhost:8001"
         }).jPlayer("play");
         },
-        supplied: "oga",
+        supplied: "mp3",
         volume: 0.3
     });
+    console.log("Initialized Player1 using MPD stream")
+
 
     //Load now playing
     $.get("/np", function(data) {
@@ -27,8 +30,27 @@ $(document).ready(function(){
         stime = parseInt(song["Time"])
         $("#curTime").text(secToMin(song["ctime"]))
         ctime = parseInt(song["ctime"])
+        var cfile = parseInt(song["cfile"])
+        if(cfile == 1){
+            var nfile = 2
+        }else{
+            var nfile = 1
+        }
         $("#songProgress").css("width", (100 * parseInt(song["ctime"])/parseInt(song["Time"])).toString() + "%")
         songProg = window.setInterval(updateSong, 1000);
+
+        $("#player-2").jPlayer({
+            ready: function () {
+            $(this).jPlayer("setMedia", {
+                mp3: "/queue/ns" + nfile + ".mp3"
+            });
+            },
+            supplied: "mp3",
+            volume: 0.3,
+            preload: "auto"
+        });
+        console.log("Initialized Player2 into the background using file /queue/ns" + nfile + ".mp3")
+        $("#ns").attr("val", nfile)
     });
 
     //Load Library
@@ -61,7 +83,30 @@ $(document).ready(function(){
 });
 
 function newSong(song) {
+    $("#player-1").jPlayer("stop")
+    $("#player-2").jPlayer("stop")
+    var ns = $("#ns").attr("val")
+    if(ns == 1){
+        ns = 2
+    }else{
+        ns = 1
+    }
+    $("#ns").attr("val", ns.toString())
+    
+    if(cPlayer == 1){
+        $("#player-1").jPlayer("setMedia", {
+                mp3: "/queue/ns" + ns.toString() + ".mp3"
+        });
+        console.log("Set Player1 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
+    }else{
+        $("#player-2").jPlayer("setMedia", {
+                mp3: "/queue/ns" + ns.toString() + ".mp3"
+        });
+        console.log("Set Player2 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
+    }
+
     window.clearInterval(songProg)
+
     $("#npArt").attr("src", song["Cover"])
     $("#npSong").text(song["Title"])
     $("#npArtist").text(song["Artist"])
@@ -69,12 +114,22 @@ function newSong(song) {
     $("#songTime").text(secToMin(song["Time"]))
     $("#curTime").text(secToMin("0"))
     $("#songProgress").css("width", "0%")
+
     stime = parseInt(song["Time"])
     ctime = 0
 }
 
 function startSong() {
-     songProg = window.setInterval(updateSong, 1000);
+    if(cPlayer == 1){
+        $("#player-2").jPlayer("play")
+        cPlayer = 2
+        console.log("Set Player2 to start playing song")
+    }else{
+        $("#player-1").jPlayer("play")
+        cPlayer = 1
+        console.log("Set Player1 to start playing song")
+    }
+    songProg = window.setInterval(updateSong, 1000);
 }
 
 function secToMin(seconds){
@@ -89,8 +144,10 @@ function secToMin(seconds){
 }
 
 function updateSong() {
-    ctime++
-    $("#curTime").text(secToMin(ctime))
-    $("#songProgress").css("width", (100 * parseInt(ctime)/parseInt(stime)).toString() + "%")
+    if(ctime <= stime){
+        ctime++
+        $("#curTime").text(secToMin(ctime))
+        $("#songProgress").css("width", (100 * parseInt(ctime)/parseInt(stime)).toString() + "%")
+    }
 
 }

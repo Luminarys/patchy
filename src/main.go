@@ -18,6 +18,8 @@ import (
 )
 
 var musicDir string = "/home/eumen/Music"
+var queuePos int
+var cFile int = 1
 
 func main() {
 	var conn *mpd.Client
@@ -35,6 +37,37 @@ func main() {
 		os.Exit(1)
 	}
 	defer w.Close()
+
+	//Get init queue and do the initial transcode
+	status, err := conn.Status()
+	if err != nil {
+		fmt.Println("Error: could not connect to MPD, exiting")
+		os.Exit(1)
+	}
+	conn.Pause(true)
+	nsongpos64, _ := strconv.ParseInt(status["nextsong"], 10, 0)
+	nsongpos := int(nsongpos64)
+
+	pl, _ := conn.PlaylistInfo(-1, -1)
+	psize := len(pl) - 1
+
+	queue, err := conn.PlaylistInfo(nsongpos-1, psize)
+	if err != nil {
+		fmt.Println("Error: could not connect to MPD, exiting")
+		os.Exit(1)
+	}
+	queuePos = 0
+	nsong := queue[queuePos]
+
+	fmt.Println("Performing init transcodes")
+	os.Remove("static/queue/next.mp3")
+	transcode(musicDir + "/" + nsong["file"])
+	os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
+	transcode(musicDir + "/" + queue[1]["file"])
+	os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
+	transcode(musicDir + "/" + queue[2]["file"])
+
+	conn.Pause(false)
 
 	h := newHub()
 	go h.run()
@@ -71,6 +104,23 @@ func main() {
 				//Stop us from getting into an infinite loop by waiting 25 ms
 				time.Sleep(25 * time.Millisecond)
 				song, err := conn.CurrentSong()
+				//Prep next song
+				queuePos++
+				fmt.Println("Next song:")
+				fmt.Println(queue[queuePos])
+				fmt.Println("The file to be replaced with the next song is:" + strconv.Itoa(cFile))
+				//If cFile is 1, then the just finished song used ns1, otherwise it was using ns2.mp3
+				if cFile == 1 {
+					os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
+					//Transcode next song
+					go transcode(musicDir + "/" + queue[queuePos+2]["file"])
+					cFile = 2
+				} else {
+					os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
+					//Transcode next song
+					go transcode(musicDir + "/" + queue[queuePos+2]["file"])
+					cFile = 1
+				}
 
 				//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
 				//Let clients know that the current song is done and that we'll be pausing.
@@ -82,8 +132,8 @@ func main() {
 
 				conn.Pause(true)
 
-				//Wait 3 seconds then resume next song
-				time.Sleep(3000 * time.Millisecond)
+				//Wait 5 seconds for clients to load the next song if necessary, then resume next song
+				time.Sleep(5000 * time.Millisecond)
 
 				if err != nil {
 					fmt.Println("Couldn't get current song! Error: " + err.Error())
@@ -98,18 +148,39 @@ func main() {
 		}
 	}()
 
-	song, err := conn.CurrentSong()
-	if err != nil {
-		fmt.Println("No Song!")
-	} else {
-		fmt.Println(song["Title"])
-	}
 	songs, err := conn.ListAllInfo("/")
 	shuffle(songs)
 	subset := songs[:20]
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
+
+	//Gets the song -- apparently firefox is a PoS and needs manual header setting
+	web.Get("/queue/(.+)", func(ctx *web.Context, song string) string {
+		//Open the file
+		f, err := os.Open("static/queue/" + song)
+		if err != nil {
+			return "Error reading file!\n"
+		}
+
+		//Get MIME
+		r, err := ioutil.ReadAll(f)
+		if err != nil {
+			return "Error reading file!\n"
+		}
+		mime := http.DetectContentType(r)
+
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			return "Error reading the file\n"
+		}
+		//This is weird - ServeContent supposedly handles MIME setting
+		//But the Webgo content setter needs to be used too
+		//In addition, ServeFile doesn't work, ServeContent has to be used
+		ctx.ContentType(mime)
+		http.ServeContent(ctx.ResponseWriter, ctx.Request, "static/queue/"+song, time.Now(), f)
+		return ""
+	})
 
 	//Returns main page with custom selection of songs
 	web.Get("/", func(ctx *web.Context) string {
@@ -139,6 +210,7 @@ func main() {
 		ctime := strings.SplitAfterN(status["time"], ":", 2)[0]
 		last := len(ctime) - 1
 		song["ctime"] = ctime[:last]
+		song["cfile"] = strconv.Itoa(cFile)
 		jsonMsg, _ := json.Marshal(song)
 		return string(jsonMsg)
 	})

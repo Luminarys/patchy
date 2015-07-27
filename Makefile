@@ -34,10 +34,11 @@ static/js/%.js: scripts/%.coffee
 	coffee -m -o static/ -c $<
 
 static: $(STYLES) $(SCRIPTS) $(IMAGES)
-	go build -o tenshi src/main.go src/hub.go src/conn.go
+	@mkdir -p static/queue/
+	go build -o tenshi src/main.go src/hub.go src/conn.go src/transcoder.go
 
 run: $(STYLES) $(SCRIPTS) $(IMAGES)
-	go run src/main.go src/hub.go src/conn.go
+	go run src/main.go src/hub.go src/conn.go src/transcoder.go
 
 all: static
 	echo $(STYLES)
