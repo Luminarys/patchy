@@ -14,3 +14,7 @@ func transcode(song string) {
 		os.Exit(1)
 	}
 }
+
+func initTrans() {
+
+}
