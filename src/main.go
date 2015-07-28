@@ -5,10 +5,12 @@ import (
 	"github.com/hoisie/web"
 )
 
-var musicDir string = "/home/eumen/Music"
+const musicDir string = "/home/eumen/Music"
 
 func main() {
 	songs := startUp()
+	shuffle(songs)
+	subset := songs[:20]
 
 	h := newHub()
 	go h.run()
@@ -16,9 +18,6 @@ func main() {
 	//Control song transitions -- During this time, update the websockets
 	utaChan := make(chan string)
 	go handleSongs(utaChan, h)
-
-	shuffle(songs)
-	subset := songs[:20]
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)

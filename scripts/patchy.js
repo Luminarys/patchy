@@ -1,8 +1,6 @@
 var ctime = 0
 var stime = 0
 var songProg
-//Player currently in use
-var cPlayer = 1
 
 $(document).ready(function(){
 
@@ -20,11 +18,6 @@ $(document).ready(function(){
         $("#curTime").text(secToMin(song["ctime"]))
         ctime = parseInt(song["ctime"])
         var cfile = parseInt(song["cfile"])
-        if(cfile == 1){
-            var nfile = 2
-        }else{
-            var nfile = 1
-        }
 
         //Load init jplayer
         $("#player-1").jPlayer({
@@ -42,19 +35,7 @@ $(document).ready(function(){
 
         $("#songProgress").css("width", (100 * parseInt(song["ctime"])/parseInt(song["Time"])).toString() + "%")
         songProg = window.setInterval(updateSong, 1000);
-
-        $("#player-2").jPlayer({
-            ready: function () {
-            $(this).jPlayer("setMedia", {
-                mp3: "/queue/ns" + nfile + ".mp3?" + randString()
-            });
-            },
-            supplied: "mp3",
-            volume: 0.3,
-            preload: "auto"
-        });
-        console.log("Initialized Player2 into the background using file /queue/ns" + nfile + ".mp3")
-        $("#ns").attr("val", nfile)
+        $("#cs").attr("val", cfile)
     });
 
     //Load Library
@@ -88,30 +69,22 @@ $(document).ready(function(){
 
 function newSong(song) {
     $("#player-1").jPlayer("stop")
-    $("#player-2").jPlayer("stop")
 
-    var ns = $("#ns").attr("val")
-    if(ns == 1){
-        ns = 2
+    var cs = $("#cs").attr("val")
+    if(cs == 1){
+        cs = 2
     }else{
-        ns = 1
+        cs = 1
     }
-    $("#ns").attr("val", ns.toString())
-    var nf = "/queue/ns" + ns.toString() + ".mp3?" + randString()
+    $("#cs").attr("val", cs.toString())
+
+    var cf = "/queue/ns" + cs.toString() + ".mp3?" + randString()
     
-    if(cPlayer == 1){
-        $("#player-1").jPlayer("clearMedia")
-        $("#player-1").jPlayer("setMedia", {
-                mp3: nf
-        });
-        console.log("Set Player1 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
-    }else{
-        $("#player-2").jPlayer("clearMedia")
-        $("#player-2").jPlayer("setMedia", {
-                mp3: nf
-        });
-        console.log("Set Player2 to load song /queue/ns" + ns.toString() + ".mp3 in the background")
-    }
+    $("#player-1").jPlayer("clearMedia")
+    $("#player-1").jPlayer("setMedia", {
+            mp3: cf
+    });
+    console.log("Set Player1 to load song /queue/ns" + cs.toString() + ".mp3 in the background")
 
     window.clearInterval(songProg)
 
@@ -128,15 +101,8 @@ function newSong(song) {
 }
 
 function startSong() {
-    if(cPlayer == 1){
-        $("#player-2").jPlayer("play")
-        cPlayer = 2
-        console.log("Set Player2 to start playing song")
-    }else{
-        $("#player-1").jPlayer("play")
-        cPlayer = 1
-        console.log("Set Player1 to start playing song")
-    }
+    $("#player-1").jPlayer("play")
+    console.log("Set Player1 to start playing song")
     songProg = window.setInterval(updateSong, 1000);
 }
 

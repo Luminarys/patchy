@@ -2,7 +2,7 @@
 # Depends on:
 # - scss
 # - coffeescript
-# Run `make` to compile static assets and produce an executable binary which will start tenshi
+# Run `make` to compile static assets and produce an executable binary which will start patchy
 # Run `make run` to compile static assets and run tenshi
 
 .PHONY: all static clean run
