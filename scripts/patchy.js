@@ -42,11 +42,41 @@ $(document).ready(function(){
     $.get("/library", function(data) {
         var songs = JSON.parse(data)
         $.each(songs, function(index, song) {
+            if($.fn.textWidth(song["Title"], "10pt arial") > 130){
+                var i = song["Title"].length-1; 
+                while($.fn.textWidth(song["Title"].substring(0, i) + "...", "10pt arial") > 130){
+                    i--;
+                }     
+                song["Title"] = song["Title"].substring(0,i) + "..."
+            }
+            if($.fn.textWidth("by " + song["Artist"], "10pt arial") > 130){
+                var i = song["Artist"].length-1; 
+                while($.fn.textWidth("by " + song["Artist"].substring(0, i) + "...", "10pt arial") > 130){
+                    i--;
+                }     
+                song["Artist"] = song["Artist"].substring(0,i) + "..."
+            }
+            if($.fn.textWidth("from " + song["Album"], "10pt arial") > 130){
+                var i = song["Album"].length-1; 
+                while($.fn.textWidth("from " + song["Album"].substring(0, i) + "...", "10pt arial") > 130){
+                    i--;
+                }     
+                song["Album"] = song["Album"].substring(0,i) + "..."
+            }
             $(".search-results").append('<div class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + song["Title"] + '</strong></p><p>by <strong>' + song["Artist"] + '</strong></p><p>from <strong>' + song["Album"] +' </strong></p><button class="btn btn-primary btn-block">Request</button></div></div>')
         }); 
     });
 
+    //Load queue
+    $.get("/curQueue", function(data) {
+        var songs = JSON.parse(data)
+        $.each(songs, function(index, song) {
+            $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')
+        });
+    });
+
     $(".result").slice(20).hide();
+    $(".item").slice(10).hide();
 
     //Initialize Websocket
     conn = new WebSocket("ws:///localhost:8080/ws");
@@ -87,6 +117,8 @@ function newSong(song) {
     console.log("Set Player1 to load song /queue/ns" + cs.toString() + ".mp3 in the background")
 
     window.clearInterval(songProg)
+
+    $("#queue").find("div:first").remove();
 
     $("#npArt").attr("src", song["Cover"])
     $("#npSong").text(song["Title"])
@@ -135,3 +167,9 @@ function randString() {
 
     return text;
 }
+
+$.fn.textWidth = function(text, font) {
+    if (!$.fn.textWidth.fakeEl) $.fn.textWidth.fakeEl = $('<span>').hide().appendTo(document.body);
+    $.fn.textWidth.fakeEl.text(text || this.val() || this.text()).css('font', font || this.css('font'));
+    return $.fn.textWidth.fakeEl.width();
+};

@@ -117,3 +117,9 @@ func getLibrary(ctx *web.Context, subset []mpd.Attrs) string {
 	jsonMsg, _ := json.Marshal(subset)
 	return string(jsonMsg)
 }
+
+func getQueue(ctx *web.Context, utaChan chan string) string {
+	//Let the song handler return a JSONify'd queue
+	utaChan <- "queue"
+	return <-utaChan
+}

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func handleSongs(utaChan chan string, h *hub) {
+func handleSongs(utaChan chan string, queue []mpd.Attrs, h *hub) {
 	var conn *mpd.Client
 	var status mpd.Attrs
 	var queuePos int = 0
@@ -30,18 +30,6 @@ func handleSongs(utaChan chan string, h *hub) {
 	defer w.Close()
 
 	status, err = conn.Status()
-
-	nsongpos64, _ := strconv.ParseInt(status["nextsong"], 10, 0)
-	nsongpos := int(nsongpos64)
-
-	pl, _ := conn.PlaylistInfo(-1, -1)
-	psize := len(pl) - 1
-
-	queue, err := conn.PlaylistInfo(nsongpos-1, psize)
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
 
 	for {
 		select {
@@ -113,12 +101,22 @@ func handleSongs(utaChan chan string, h *hub) {
 			if msg == "cfile" {
 				utaChan <- strconv.Itoa(cFile)
 			}
-
+			if msg == "queue" {
+				if len(queue[queuePos+1:]) > 0 {
+					jsonMsg, err := json.Marshal(queue[queuePos+1:])
+					if err != nil {
+						fmt.Println("Warning, could not jsonify queue")
+					}
+					utaChan <- string(jsonMsg)
+				} else {
+					utaChan <- ""
+				}
+			}
 		}
 	}
 }
 
-func startUp() []mpd.Attrs {
+func startUp() (library []mpd.Attrs, queue []mpd.Attrs) {
 	var conn *mpd.Client
 
 	fmt.Println("Connecting to MPD")
@@ -139,7 +137,7 @@ func startUp() []mpd.Attrs {
 	pl, _ := conn.PlaylistInfo(-1, -1)
 	psize := len(pl) - 1
 
-	queue, err := conn.PlaylistInfo(nsongpos-1, psize)
+	queue, err = conn.PlaylistInfo(nsongpos-1, psize)
 	if err != nil {
 		fmt.Println("Error: could not connect to MPD, exiting")
 		os.Exit(1)
@@ -156,5 +154,5 @@ func startUp() []mpd.Attrs {
 
 	conn.Pause(false)
 	songs, err := conn.ListAllInfo("/")
-	return songs
+	return songs, queue
 }
