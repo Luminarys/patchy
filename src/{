@@ -112,38 +112,14 @@ func handleSongs(utaChan chan string, queue []mpd.Attrs, h *hub) {
 					utaChan <- ""
 				}
 			}
-			if isJSON(msg) {
-				var req map[string]string
-
-				if err = json.Unmarshal([]byte(msg), &req); err != nil {
+			if isJson(msg) {
+				var js map[string]string
+				if err = json.Unmarshal([]byte(msg), &js) {
 					fmt.Println("Error, couldn't unmarshal client request")
-				} else {
-					go search(req, h)
-				}
-			}
-		}
-	}
-}
+				}elseP
 
-func search(req map[string]string, h *hub) {
-	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	songs, err := conn.ListAllInfo("/")
-	for _, song := range songs {
-		if song["Title"] == req["Title"] && (song["Album"] == req["Album"] || song["Artist"] == req["Artist"]) {
-			fmt.Println("Found song: " + song["file"])
-			if err = conn.PlaylistAdd("Queue", song["file"]); err != nil {
-				fmt.Println("Couldn't add song to playlist! Error: " + err.Error())
+				{
 			}
-			msg := map[string]string{"cmd": "queue", "Title": song["Title"], "Artist": song["Artist"]}
-			jsonMsg, _ := json.Marshal(msg)
-			h.broadcast <- []byte(jsonMsg)
-			break
 		}
 	}
 }

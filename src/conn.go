@@ -14,16 +14,19 @@ type connection struct {
 
 	// The hub.
 	h *hub
+
+	// The channel for interfacing with the song/mpd handler
+	utaChan chan string
 }
 
-//Reads in requests from the clients
+//Reads in requests from the clients and sends them to the song handler
 func (c *connection) reader() {
 	var msg string
 	for {
 		if err := websocket.Message.Receive(c.ws, &msg); err != nil {
 			break
 		}
-		c.h.broadcast <- []byte(msg)
+		c.utaChan <- msg
 	}
 	c.ws.Close()
 }
@@ -41,8 +44,8 @@ func (c *connection) writer() {
 }
 
 //Socket handler -- Creates a new connection for each client
-func handleSocket(ws *websocket.Conn, hub *hub) {
-	c := &connection{send: make(chan []byte, 256), ws: ws, h: hub}
+func handleSocket(ws *websocket.Conn, hub *hub, utaChan chan string) {
+	c := &connection{send: make(chan []byte, 256), ws: ws, h: hub, utaChan: utaChan}
 	c.h.register <- c
 	defer func() { c.h.unregister <- c }()
 	go c.writer()

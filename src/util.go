@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/fhs/gompd/mpd"
 	"math/rand"
 	"os"
@@ -31,4 +32,9 @@ func exists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func isJSON(s string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(s), &js) == nil
 }

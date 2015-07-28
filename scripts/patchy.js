@@ -4,6 +4,8 @@ var songProg
 
 $(document).ready(function(){
 
+    //Initialize Websocket
+    conn = new WebSocket("ws:///localhost:8080/ws");
 
     //Load now playing
     $.get("/np", function(data) {
@@ -42,29 +44,42 @@ $(document).ready(function(){
     $.get("/library", function(data) {
         var songs = JSON.parse(data)
         $.each(songs, function(index, song) {
+            var title = song["Title"]
+            var artist = song["Artist"]
+            var album = song["Album"]
             if($.fn.textWidth(song["Title"], "10pt arial") > 130){
                 var i = song["Title"].length-1; 
                 while($.fn.textWidth(song["Title"].substring(0, i) + "...", "10pt arial") > 130){
                     i--;
                 }     
-                song["Title"] = song["Title"].substring(0,i) + "..."
+                title = song["Title"].substring(0,i) + "..."
             }
             if($.fn.textWidth("by " + song["Artist"], "10pt arial") > 130){
                 var i = song["Artist"].length-1; 
                 while($.fn.textWidth("by " + song["Artist"].substring(0, i) + "...", "10pt arial") > 130){
                     i--;
                 }     
-                song["Artist"] = song["Artist"].substring(0,i) + "..."
+                artist = song["Artist"].substring(0,i) + "..."
             }
             if($.fn.textWidth("from " + song["Album"], "10pt arial") > 130){
                 var i = song["Album"].length-1; 
                 while($.fn.textWidth("from " + song["Album"].substring(0, i) + "...", "10pt arial") > 130){
                     i--;
                 }     
-                song["Album"] = song["Album"].substring(0,i) + "..."
+                album = song["Album"].substring(0,i) + "..."
             }
-            $(".search-results").append('<div class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + song["Title"] + '</strong></p><p>by <strong>' + song["Artist"] + '</strong></p><p>from <strong>' + song["Album"] +' </strong></p><button class="btn btn-primary btn-block">Request</button></div></div>')
+            $(".search-results").append('<div title="' + song["Title"] + '" album="' + song["Album"] + '" artist="' + song["Artist"] + '" class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + title + '</strong></p><p>by <strong>' + artist + '</strong></p><p>from <strong>' + album +' </strong></p><button class="req-button btn btn-primary btn-block">Request</button></div></div>')
         }); 
+        $(".req-button").click(function() {
+            var req = {}
+            var block = $(this).parent().parent()
+            console.log(block)
+            req["Title"] = $(block).attr("title")
+            req["Artist"] = $(block).attr("artist")
+            req["Album"] = $(block).attr("album")
+            console.log(JSON.stringify(req))
+            conn.send(JSON.stringify(req))
+        });
     });
 
     //Load queue
@@ -78,8 +93,6 @@ $(document).ready(function(){
     $(".result").slice(20).hide();
     $(".item").slice(10).hide();
 
-    //Initialize Websocket
-    conn = new WebSocket("ws:///localhost:8080/ws");
     conn.onclose = function(evt) {
         console.log("WS closed")
     }
@@ -94,8 +107,16 @@ $(document).ready(function(){
         if(cmd["cmd"] == "NS"){
             startSong()
         }
+        if(cmd["cmd"] == "queue"){
+            updateQueue(cmd)
+        }
     }
+
 });
+
+function updateQueue(song) {
+        $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')
+}
 
 function newSong(song) {
     $("#player-1").jPlayer("stop")

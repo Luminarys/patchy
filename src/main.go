@@ -37,7 +37,7 @@ func main() {
 
 	//Handle the websocket
 	web.Websocket("/ws", websocket.Handler(func(ws *websocket.Conn) {
-		handleSocket(ws, h)
+		handleSocket(ws, h, utaChan)
 	}))
 
 	//Returns a library sample for initial client display
