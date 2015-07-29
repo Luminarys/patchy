@@ -9,146 +9,122 @@ import (
 	"time"
 )
 
-func handleSongs(utaChan chan string, queue []mpd.Attrs, h *hub) {
-	var conn *mpd.Client
-	var status mpd.Attrs
-	var queuePos int = 0
-	var cFile int = 1
-
-	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	w, err := mpd.NewWatcher("tcp", "127.0.0.1:6600", "", "player")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	defer w.Close()
-
-	status, err = conn.Status()
-
-	for {
-		select {
-		case <-w.Event:
-			status, err = conn.Status()
-			if err != nil {
-				//Connections seem to drop often, so reconnect when this happens
-				fmt.Println("Couldn't get current status! Error: " + err.Error())
-				conn.Close()
-
-				fmt.Println("Reconnecting...")
-				conn, err = mpd.Dial("tcp", "127.0.0.1:6600")
-				if err != nil {
-					fmt.Println("Error: could not connect to MPD, exiting")
-					os.Exit(1)
-				}
-				defer conn.Close()
-
-				status, err = conn.Status()
+func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
+	ctChan := make(chan int)
+	started := false
+	lastTime := 0
+	for msg := range utaChan {
+		fmt.Println(msg)
+		//Trigger this if there is a new song to be played
+		if msg == "ns" {
+			started = true
+			var ns *qsong
+			//If there's only one thing in the queue, transcode it and then consume it
+			//Precondition: q.queue has at least 1 item in it.
+			ns = q.consume()
+			if len(q.queue) > 1 {
+				go q.transcodeNext()
 			}
-			pos, _ := strconv.ParseFloat(status["elapsed"], 64)
-			if pos == 0.000 && status["state"] == "play" {
-				//Stop us from getting into an infinite loop by waiting 25 ms
-				time.Sleep(100 * time.Millisecond)
-				song, err := conn.CurrentSong()
-				//Prep next song
-				queuePos++
-				fmt.Println("Next song:")
-				fmt.Println(queue[queuePos+1])
-				fmt.Println("The file to be replaced with the next song is:" + strconv.Itoa(cFile))
-				//If cFile is 1, then the just finished song used ns1, otherwise it was using ns2.mp3
-				if cFile == 1 {
-					os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
-					//Transcode next song
-					go transcode(musicDir + "/" + queue[queuePos+2]["file"])
-					cFile = 2
-				} else {
-					os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
-					//Transcode next song
-					go transcode(musicDir + "/" + queue[queuePos+2]["file"])
-					cFile = 1
-				}
+			//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
+			//Let clients know that the current song is done and that we'll be pausing.
+			//Also give them info about the next song to be played
+			//During this time, clients that have not done so will transfer from livestream to downloads
+			msg := map[string]string{"cmd": "done", "Title": ns.Title, "Artist": ns.Artist, "Album": ns.Album, "Cover": "/art/" + GetAlbumDir(ns.File), "Time": strconv.Itoa(ns.Length)}
+			lastTime = ns.Length
+			jsonMsg, _ := json.Marshal(msg)
+			h.broadcast <- []byte(jsonMsg)
 
-				//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
-				//Let clients know that the current song is done and that we'll be pausing.
-				//Also give them info about the next song to be played
-				//During this time, clients that have not done so will transfer from livestream to downloads
-				msg := map[string]string{"cmd": "done", "Title": song["Title"], "Artist": song["Artist"], "Album": song["Album"], "Cover": "/art/" + GetAlbumDir(song["file"]), "Time": song["Time"]}
-				jsonMsg, _ := json.Marshal(msg)
-				h.broadcast <- []byte(jsonMsg)
+			//Wait 2 seconds for clients to load the next song if necessary, then resume next song
+			time.Sleep(2000 * time.Millisecond)
 
-				conn.Pause(true)
+			//Tell clients to begin the song
+			msg = map[string]string{"cmd": "NS"}
+			jsonMsg, _ = json.Marshal(msg)
+			h.broadcast <- []byte(jsonMsg)
+			go timer(ns.Length, utaChan, ctChan)
+		}
 
-				//Wait 3 seconds for clients to load the next song if necessary, then resume next song
-				time.Sleep(1000 * time.Millisecond)
+		//Get current song file in use
+		if msg == "cfile" {
+			utaChan <- strconv.Itoa(q.CFile)
+		}
 
-				if err != nil {
-					fmt.Println("Couldn't get current song! Error: " + err.Error())
-				} else {
-					//Tell clients to begin the song
-					msg = map[string]string{"cmd": "NS"}
-					jsonMsg, _ := json.Marshal(msg)
-					h.broadcast <- []byte(jsonMsg)
-					conn.Pause(false)
-				}
+		//If a song just finished, load in the next thing from queue if available
+		if msg == "done" {
+			started = false
+			if len(q.queue) > 0 {
+				go func() {
+					utaChan <- "ns"
+				}()
 			}
+		}
 
-		case msg := <-utaChan:
-			if msg == "cfile" {
-				utaChan <- strconv.Itoa(cFile)
+		if msg == "ctime" {
+			if started {
+				ctChan <- 0
+				utaChan <- strconv.Itoa(<-ctChan)
+			} else {
+				//We want to actually do 100% here, do it later >.>
+				utaChan <- strconv.Itoa(lastTime)
 			}
+		}
+
+		/*
 			if msg == "queue" {
-				if len(queue[queuePos+1:]) > 0 {
-					jsonMsg, err := json.Marshal(queue[queuePos+1:])
-					if err != nil {
-						fmt.Println("Warning, could not jsonify queue")
-					}
-					utaChan <- string(jsonMsg)
-				} else {
-					utaChan <- ""
+				jsonMsg, err := json.Marshal(q.queue)
+				if err != nil {
+					fmt.Println("Warning, could not jsonify queue")
 				}
+				utaChan <- string(jsonMsg)
+			} else {
+				utaChan <- ""
 			}
-			if isJSON(msg) {
-				var req map[string]string
+		*/
 
-				if err = json.Unmarshal([]byte(msg), &req); err != nil {
-					fmt.Println("Error, couldn't unmarshal client request")
-				} else {
-					go search(req, h)
-				}
+		//Handles requests
+		if isJSON(msg) {
+			var req map[string]string
+
+			if err := json.Unmarshal([]byte(msg), &req); err != nil {
+				fmt.Println("Error, couldn't unmarshal client request")
+			} else {
+				search(req, h, utaChan, library, q, started)
 			}
 		}
 	}
 }
 
-func search(req map[string]string, h *hub) {
-	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	songs, err := conn.ListAllInfo("/")
+func search(req map[string]string, h *hub, utaChan chan string, songs []mpd.Attrs, q *queue, playing bool) {
 	for _, song := range songs {
 		if song["Title"] == req["Title"] && (song["Album"] == req["Album"] || song["Artist"] == req["Artist"]) {
 			fmt.Println("Found song: " + song["file"])
-			if err = conn.PlaylistAdd("Queue", song["file"]); err != nil {
-				fmt.Println("Couldn't add song to playlist! Error: " + err.Error())
+			st, err := strconv.Atoi(song["Time"])
+			if err != nil {
+				fmt.Println("Couldn't add song due to time conversion error!")
+				break
 			}
+			q.add(&qsong{Title: song["Title"], Album: song["Album"], Artist: song["Artist"], Length: st, File: song["file"]})
+
 			msg := map[string]string{"cmd": "queue", "Title": song["Title"], "Artist": song["Artist"]}
 			jsonMsg, _ := json.Marshal(msg)
 			h.broadcast <- []byte(jsonMsg)
+
+			if len(q.queue) == 1 {
+				if !playing {
+					go func() {
+						q.transcodeNext()
+						utaChan <- "ns"
+					}()
+				} else {
+					go q.transcodeNext()
+				}
+			}
 			break
 		}
 	}
 }
 
-func startUp() (library []mpd.Attrs, queue []mpd.Attrs) {
+func startUp() (library []mpd.Attrs) {
 	var conn *mpd.Client
 
 	fmt.Println("Connecting to MPD")
@@ -159,32 +135,13 @@ func startUp() (library []mpd.Attrs, queue []mpd.Attrs) {
 	}
 	defer conn.Close()
 
-	conn.Pause(true)
-
-	status, _ := conn.Status()
-
-	nsongpos64, _ := strconv.ParseInt(status["nextsong"], 10, 0)
-	nsongpos := int(nsongpos64)
-
-	pl, _ := conn.PlaylistInfo(-1, -1)
-	psize := len(pl) - 1
-
-	queue, err = conn.PlaylistInfo(nsongpos-1, psize)
+	songs, err := conn.ListAllInfo("/")
 	if err != nil {
 		fmt.Println("Error: could not connect to MPD, exiting")
 		os.Exit(1)
 	}
-	nsong := queue[0]
-
-	fmt.Println("Performing init transcodes")
+	os.Remove("static/queue/ns1.mp3")
+	os.Remove("static/queue/ns2.mp3")
 	os.Remove("static/queue/next.mp3")
-	transcode(musicDir + "/" + nsong["file"])
-	os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
-	transcode(musicDir + "/" + queue[1]["file"])
-	os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
-	transcode(musicDir + "/" + queue[2]["file"])
-
-	conn.Pause(false)
-	songs, err := conn.ListAllInfo("/")
-	return songs, queue
+	return songs
 }

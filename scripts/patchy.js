@@ -88,7 +88,12 @@ $(document).ready(function(){
         $.each(songs, function(index, song) {
             $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')
         });
+
+        if($(".item").length > 9) {
+            $(".req-button").prop("disabled", true);
+        }
     });
+
 
     $(".result").slice(20).hide();
     $(".item").slice(10).hide();
@@ -115,7 +120,12 @@ $(document).ready(function(){
 });
 
 function updateQueue(song) {
-        $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')
+    $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')
+    if($(".item").length > 9) {
+        $(".req-button").prop("disabled", true);
+    }else{
+        $(".req-button").prop("disabled", false);
+    }
 }
 
 function newSong(song) {

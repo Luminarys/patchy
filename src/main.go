@@ -8,16 +8,18 @@ import (
 const musicDir string = "/home/eumen/Music"
 
 func main() {
-	songs, queue := startUp()
+	songs := startUp()
 	shuffle(songs)
 	subset := songs[:20]
 
 	h := newHub()
 	go h.run()
 
+	q := newQueue()
+
 	//Control song transitions -- During this time, update the websockets and notify clients
 	utaChan := make(chan string)
-	go handleSongs(utaChan, queue, h)
+	go handleSongs(utaChan, songs, h, q)
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
@@ -32,7 +34,7 @@ func main() {
 
 	//Returns the JSON info for the currently playing song
 	web.Get("/np", func(ctx *web.Context) string {
-		return getNowPlaying(ctx, utaChan)
+		return getNowPlaying(ctx, utaChan, q)
 	})
 
 	//Handle the websocket
@@ -47,7 +49,7 @@ func main() {
 
 	//Returns the current queue
 	web.Get("/curQueue", func(ctx *web.Context) string {
-		return getQueue(ctx, utaChan)
+		return getQueue(ctx, q)
 	})
 
 	web.Run("0.0.0.0:8080")
