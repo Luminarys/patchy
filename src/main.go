@@ -35,11 +35,6 @@ func main() {
 		return getSearchRes(ctx, req, l)
 	})
 
-	//Returns main page with custom selection of songs
-	web.Get("/", func(ctx *web.Context) string {
-		return getIndex(ctx, subset)
-	})
-
 	//Returns the JSON info for the currently playing song
 	web.Get("/np", func(ctx *web.Context) string {
 		return getNowPlaying(ctx, utaChan, reChan, q, len(h.connections))

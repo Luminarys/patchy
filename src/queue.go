@@ -61,21 +61,17 @@ func (q *queue) transcodeNext() {
 	switch {
 	case l == 1:
 		transcode(musicDir + "/" + q.queue[0].File)
-		//Rename to opposite of current file, since the clients will be told to go
-		//to the next song after this
-		if q.CFile == 1 {
-			os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
-		} else {
-			os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
-		}
 	case l > 1:
-		//If we have stuff in queue, then we'll be transcoding AFTER a consume
-		//therefore we'll do the opposite of the current file
 		transcode(musicDir + "/" + q.queue[1].File)
-		if q.CFile == 1 {
-			os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
-		} else {
-			os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
-		}
+	}
+	//Rename to opposite of current file, since the clients will be told to go
+	//to the next song after this
+	//Transcodes will happen BEFORE consumes(need to create the file for client use)
+	//if there is only one thing in the queue
+	//other wise transcodes occur afterwards(since you want to transcodein background)
+	if q.CFile == 1 {
+		os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
+	} else {
+		os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
 	}
 }

@@ -12,9 +12,14 @@ STYLES+=$(patsubst styles/%.css,static/css/%.css,$(wildcard styles/*.css))
 SCRIPTS:=$(patsubst scripts/%.coffee,static/js/%.js,$(wildcard scripts/*.coffee))
 SCRIPTS+=$(patsubst scripts/%.js,static/js/%.js,$(wildcard scripts/*.js))
 IMAGES:=$(patsubst image/%,static/image/%,$(wildcard image/*))
+PAGES:=$(patsubst pages/%,static/%,$(wildcard pages/*))
 
 static/image/%: image/%
 	@mkdir -p static/image/
+	cp $< $@
+
+static/%: pages/%
+	@mkdir -p static/
 	cp $< $@
 
 static/css/%.css: styles/%.css
@@ -33,16 +38,19 @@ static/js/%.js: scripts/%.coffee
 	@mkdir -p static/js
 	coffee -m -o static/ -c $<
 
-static: $(STYLES) $(SCRIPTS) $(IMAGES)
+static: $(STYLES) $(SCRIPTS) $(IMAGES) ${PAGES}
 	@mkdir -p static/queue/
+	@mkdir -p temp/
 	go build -o patchy src/main.go src/hub.go src/conn.go src/transcoder.go src/songHandler.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go
 
-run: $(STYLES) $(SCRIPTS) $(IMAGES)
+run: $(STYLES) $(SCRIPTS) $(IMAGES) ${PAGES}
 	go run src/main.go src/hub.go src/conn.go src/transcoder.go src/mpd.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go
 
 all: static
 	echo $(STYLES)
 	echo $(SCRIPTS)
+	echo ${IMAGES}
+	echo ${PAGES}
 
 clean:
 	rm -rf static

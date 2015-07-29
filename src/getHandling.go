@@ -2,34 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/fhs/gompd/mpd"
 	"github.com/hoisie/web"
-	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 )
-
-func getIndex(ctx *web.Context, songs []mpd.Attrs) string {
-	funcMap := template.FuncMap{
-		"AlbumDir": GetAlbumDir,
-	}
-	t, err := template.New("index.html").Funcs(funcMap).ParseFiles("templates/index.html")
-	if err != nil {
-		fmt.Println("Couldn't parse template! Error: " + err.Error())
-	}
-	t = t.Funcs(funcMap)
-	if err != nil {
-		fmt.Println("Couldn't parse template! Error: " + err.Error())
-	}
-	if err = t.Execute(ctx.ResponseWriter, songs); err != nil {
-		fmt.Println("Couldn't execute template! Error: " + err.Error())
-	}
-	return ""
-}
 
 func getCover(ctx *web.Context, album string) string {
 	dir := musicDir + "/" + album
