@@ -1,5 +1,7 @@
 package main
 
+import "encoding/json"
+
 type hub struct {
 	// Registered connections.
 	connections map[*connection]bool
@@ -28,10 +30,20 @@ func (h *hub) run() {
 		select {
 		case c := <-h.register:
 			h.connections[c] = true
+			go func() {
+				msg := map[string]string{"cmd": "ljoin"}
+				jsonMsg, _ := json.Marshal(msg)
+				h.broadcast <- []byte(jsonMsg)
+			}()
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
 				close(c.send)
+				go func() {
+					msg := map[string]string{"cmd": "lleave"}
+					jsonMsg, _ := json.Marshal(msg)
+					h.broadcast <- []byte(jsonMsg)
+				}()
 			}
 		//Global broadcasts
 		case m := <-h.broadcast:

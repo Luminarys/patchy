@@ -21,6 +21,11 @@ $(document).ready(function(){
         $("#curTime").text(secToMin(song["ctime"]))
         ctime = parseInt(song["ctime"])
         var cfile = parseInt(song["cfile"])
+        var listeners = parseInt(song["listeners"])
+        $("#nl").text(listeners)
+        if(listeners == 1) {
+            $("#ltext").text("listener")
+        }
         if(stime != 0){
             playing = true
         }
@@ -78,9 +83,33 @@ $(document).ready(function(){
         if(cmd["cmd"] == "NS"){
             startSong(cmd)
         }
+
         if(cmd["cmd"] == "queue"){
             updateQueue(cmd)
         }
+
+        //Someone joined
+        if(cmd["cmd"] == "ljoin"){
+            var listeners = parseInt($("#nl").text()) + 1
+            $("#nl").text(listeners)
+            if(listeners != 1) {
+                $("#ltext").text("listeners")
+            }else{
+                $("#ltext").text("listener")
+            }
+        }
+
+        //Someone left
+        if(cmd["cmd"] == "lleave"){
+            var listeners = parseInt($("#nl").text()) - 1
+            $("#nl").text(listeners)
+            if(listeners == 1) {
+                $("#ltext").text("listener")
+            }else{
+                $("#ltext").text("listeners")
+            }
+        }
+
     }
     $("#searchBar").keyup(function(event) {
         if(event.which != '13') {
@@ -161,6 +190,10 @@ function endSong() {
     });
     console.log("Set Player1 to load song /queue/ns" + cs.toString() + ".mp3 in the background")
     window.clearInterval(songProg)
+
+    $("#curTime").text(secToMin(stime))
+    $("#songProgress").css("width", "100%")
+
     if($(".item").length > 9) {
         $(".req-button").prop("disabled", true);
     }else{

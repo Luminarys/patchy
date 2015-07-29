@@ -42,7 +42,7 @@ func main() {
 
 	//Returns the JSON info for the currently playing song
 	web.Get("/np", func(ctx *web.Context) string {
-		return getNowPlaying(ctx, utaChan, reChan, q)
+		return getNowPlaying(ctx, utaChan, reChan, q, len(h.connections))
 	})
 
 	//Handle the websocket

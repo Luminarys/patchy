@@ -9,13 +9,13 @@ import (
 
 func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q *queue) {
 	ctChan := make(chan int)
-	started := false
+	playing := false
 	lastTime := 0
 	for msg := range utaChan {
 		fmt.Println(msg)
 		//Trigger this if there is a new song to be played
-		if msg == "ns" {
-			started = true
+		if msg == "ns" && !playing {
+			playing = true
 			var ns *qsong
 			//Precondition: q.queue has at least 1 item in it.
 			//Consume item in queue, if there's anything left, initiate a transcode
@@ -48,7 +48,7 @@ func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q 
 
 		//If a song just finished, load in the next thing from queue if available
 		if msg == "done" {
-			started = false
+			playing = false
 			if len(q.queue) > 0 {
 				go func() {
 					utaChan <- "ns"
@@ -57,7 +57,7 @@ func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q 
 		}
 
 		if msg == "ctime" {
-			if started {
+			if playing {
 				ctChan <- 0
 				reChan <- strconv.Itoa(<-ctChan)
 			} else {
@@ -84,14 +84,14 @@ func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q 
 			if err := json.Unmarshal([]byte(msg), &req); err != nil {
 				fmt.Println("Error, couldn't unmarshal client request")
 			} else {
-				if started {
+				if playing {
 					ctChan <- 0
 					ctime := <-ctChan
 					if len(q.queue) != 0 || q.np.Length-ctime > 15 {
-						search(req, h, utaChan, l, q, started)
+						go search(req, h, utaChan, l, q, playing)
 					}
 				} else {
-					search(req, h, utaChan, l, q, started)
+					go search(req, h, utaChan, l, q, playing)
 				}
 			}
 		}
@@ -110,10 +110,8 @@ func search(req map[string]string, h *hub, utaChan chan string, l *library, q *q
 
 		if len(q.queue) == 1 {
 			if !playing {
-				go func() {
-					q.transcodeNext()
-					utaChan <- "ns"
-				}()
+				q.transcodeNext()
+				utaChan <- "ns"
 			} else {
 				go q.transcodeNext()
 			}

@@ -101,7 +101,7 @@ func getSearchRes(ctx *web.Context, req string, l *library) string {
 	return string(jsonMsg)
 }
 
-func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, queue *queue) string {
+func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, queue *queue, listeners int) string {
 	song := make(map[string]string)
 
 	if np := queue.np; np != nil {
@@ -128,6 +128,7 @@ func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, qu
 
 		song["ctime"] = "0"
 		song["cfile"] = "1"
+		song["listeners"] = strconv.Itoa(listeners)
 	}
 	jsonMsg, _ := json.Marshal(song)
 	return string(jsonMsg)

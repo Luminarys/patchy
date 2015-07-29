@@ -17,9 +17,9 @@ Usage instructions to come once this software is more mature.
 * Implement the Queue properly
 * Implement client requests
 * Implement library searching
+* Implement now listening counter
 
 #Things to Do:
-* Implement now listening counter
 * Implement client music uploads
 * Deuglify stuff
 * Equalizer(?)
