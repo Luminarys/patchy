@@ -95,6 +95,12 @@ func getSong(ctx *web.Context, song string) string {
 	return ""
 }
 
+func getSearchRes(ctx *web.Context, req string, l *library) string {
+	res := l.asyncSearch(req)
+	jsonMsg, _ := json.Marshal(res)
+	return string(jsonMsg)
+}
+
 func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, queue *queue) string {
 	song := make(map[string]string)
 

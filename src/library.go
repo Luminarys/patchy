@@ -6,6 +6,7 @@ import (
 	"github.com/fhs/gompd/mpd"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -57,6 +58,21 @@ func (l *library) reqSearch(title string, album string, artist string) (*qsong, 
 		}
 	}
 	return nil, errors.New("No songs found!")
+}
+
+func (l *library) asyncSearch(req string) []mpd.Attrs {
+	res := make([]mpd.Attrs, 0)
+
+	//There has to be a faster way to do this >.>
+	for _, song := range l.library {
+		if strings.Contains(song["Title"], req) || strings.Contains(song["Album"], req) || strings.Contains(song["Artist"], req) {
+			res = append(res, song)
+			if len(res) == 20 {
+				break
+			}
+		}
+	}
+	return res
 }
 
 //Updates the library

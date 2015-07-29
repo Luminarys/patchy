@@ -16,8 +16,10 @@ Usage instructions to come once this software is more mature.
 * Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays the song it prev. loaded
 * Implement the Queue properly
 * Implement client requests
+* Implement library searching
 
 #Things to Do:
-* Implement library searching
-* Implement client music uploads
 * Implement now listening counter
+* Implement client music uploads
+* Deuglify stuff
+* Equalizer(?)

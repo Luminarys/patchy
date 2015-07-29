@@ -45,44 +45,7 @@ $(document).ready(function(){
 
     //Load Library
     $.get("/library", function(data) {
-        var songs = JSON.parse(data)
-        $.each(songs, function(index, song) {
-            var title = song["Title"]
-            var artist = song["Artist"]
-            var album = song["Album"]
-            if($.fn.textWidth(song["Title"], "10pt arial") > 130){
-                var i = song["Title"].length-1; 
-                while($.fn.textWidth(song["Title"].substring(0, i) + "...", "10pt arial") > 130){
-                    i--;
-                }     
-                title = song["Title"].substring(0,i) + "..."
-            }
-            if($.fn.textWidth("by " + song["Artist"], "10pt arial") > 130){
-                var i = song["Artist"].length-1; 
-                while($.fn.textWidth("by " + song["Artist"].substring(0, i) + "...", "10pt arial") > 130){
-                    i--;
-                }     
-                artist = song["Artist"].substring(0,i) + "..."
-            }
-            if($.fn.textWidth("from " + song["Album"], "10pt arial") > 130){
-                var i = song["Album"].length-1; 
-                while($.fn.textWidth("from " + song["Album"].substring(0, i) + "...", "10pt arial") > 130){
-                    i--;
-                }     
-                album = song["Album"].substring(0,i) + "..."
-            }
-            $(".search-results").append('<div title="' + song["Title"] + '" album="' + song["Album"] + '" artist="' + song["Artist"] + '" class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + title + '</strong></p><p>by <strong>' + artist + '</strong></p><p>from <strong>' + album +' </strong></p><button class="req-button btn btn-primary btn-block">Request</button></div></div>')
-        }); 
-        $(".req-button").click(function() {
-            var req = {}
-            var block = $(this).parent().parent()
-            console.log(block)
-            req["Title"] = $(block).attr("title")
-            req["Artist"] = $(block).attr("artist")
-            req["Album"] = $(block).attr("album")
-            console.log(JSON.stringify(req))
-            conn.send(JSON.stringify(req))
-        });
+        fillSearchRes(data)
     });
 
     //Load queue
@@ -119,7 +82,56 @@ $(document).ready(function(){
             updateQueue(cmd)
         }
     }
+    $("#searchBar").keyup(function(event) {
+        if(event.which != '13') {
+            $.get("/search/" + $("#searchBar").val(), function(data) {
+                fillSearchRes(data)
+            });
+        }
+    });
 });
+
+function fillSearchRes(data) {
+    var songs = JSON.parse(data)
+    $(".search-results").empty()
+    $.each(songs, function(index, song) {
+        var title = song["Title"]
+        var artist = song["Artist"]
+        var album = song["Album"]
+        if($.fn.textWidth(song["Title"], "10pt arial") > 130){
+            var i = song["Title"].length-1; 
+            while($.fn.textWidth(song["Title"].substring(0, i) + "...", "10pt arial") > 130){
+                i--;
+            }     
+            title = song["Title"].substring(0,i) + "..."
+        }
+        if($.fn.textWidth("by " + song["Artist"], "10pt arial") > 130){
+            var i = song["Artist"].length-1; 
+            while($.fn.textWidth("by " + song["Artist"].substring(0, i) + "...", "10pt arial") > 130){
+                i--;
+            }     
+            artist = song["Artist"].substring(0,i) + "..."
+        }
+        if($.fn.textWidth("from " + song["Album"], "10pt arial") > 130){
+            var i = song["Album"].length-1; 
+            while($.fn.textWidth("from " + song["Album"].substring(0, i) + "...", "10pt arial") > 130){
+                i--;
+            }     
+            album = song["Album"].substring(0,i) + "..."
+        }
+        $(".search-results").append('<div title="' + song["Title"] + '" album="' + song["Album"] + '" artist="' + song["Artist"] + '" class="result"><img alt="Album art" src="/art/' + song["file"].split("/")[0] + '"><div><p><strong>' + title + '</strong></p><p>by <strong>' + artist + '</strong></p><p>from <strong>' + album +' </strong></p><button class="req-button btn btn-primary btn-block">Request</button></div></div>')
+    }); 
+    $(".req-button").click(function() {
+            var req = {}
+            var block = $(this).parent().parent()
+            console.log(block)
+            req["Title"] = $(block).attr("title")
+            req["Artist"] = $(block).attr("artist")
+            req["Album"] = $(block).attr("album")
+            console.log(JSON.stringify(req))
+            conn.send(JSON.stringify(req))
+    });
+}
 
 function updateQueue(song) {
     $("#queue").append('<div class="item"><h4><strong>' + song["Title"] + '</strong></h4><p>by <strong>' + song["Artist"] + '</strong></p></div>')

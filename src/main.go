@@ -30,6 +30,11 @@ func main() {
 	//Gets the song -- apparently firefox is a PoS and needs manual header setting
 	web.Get("/queue/(.+)", getSong)
 
+	//Search for songs similar to a given title
+	web.Get("/search/(.+)", func(ctx *web.Context, req string) string {
+		return getSearchRes(ctx, req, l)
+	})
+
 	//Returns main page with custom selection of songs
 	web.Get("/", func(ctx *web.Context) string {
 		return getIndex(ctx, subset)
