@@ -25,17 +25,14 @@ func handleSongs(utaChan chan string, reChan chan string, library []mpd.Attrs, h
 			if len(q.queue) > 1 {
 				go q.transcodeNext()
 			}
-			//updateQueue <- &updateQueueMsg{Song: song["Title"], Artist: song["Artist"]}
-			//Let clients know that the current song is done and that we'll be pausing.
-			//Also give them info about the next song to be played
-			//During this time, clients that have not done so will transfer from livestream to downloads
-			msg := map[string]string{"cmd": "done"}
 			lastTime = ns.Length
+
+			msg := map[string]string{"cmd": "done"}
 			jsonMsg, _ := json.Marshal(msg)
 			h.broadcast <- []byte(jsonMsg)
 
-			//Wait 2 seconds for clients to load the next song if necessary, then resume next song
-			time.Sleep(2000 * time.Millisecond)
+			//Wait 4 seconds for clients to load the next song if necessary, then resume next song
+			time.Sleep(4000 * time.Millisecond)
 
 			//Tell clients to begin the song
 			msg = map[string]string{"cmd": "NS", "Title": ns.Title, "Artist": ns.Artist, "Album": ns.Album, "Cover": "/art/" + GetAlbumDir(ns.File), "Time": strconv.Itoa(ns.Length)}
@@ -87,7 +84,15 @@ func handleSongs(utaChan chan string, reChan chan string, library []mpd.Attrs, h
 			if err := json.Unmarshal([]byte(msg), &req); err != nil {
 				fmt.Println("Error, couldn't unmarshal client request")
 			} else {
-				search(req, h, utaChan, library, q, started)
+				if started {
+					ctChan <- 0
+					ctime := <-ctChan
+					if len(q.queue) != 0 || q.np.Length-ctime > 15 {
+						search(req, h, utaChan, library, q, started)
+					}
+				} else {
+					search(req, h, utaChan, library, q, started)
+				}
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 var ctime = 0
 var stime = 0
 var songProg
+var playing = false
 
 $(document).ready(function(){
 
@@ -20,7 +21,9 @@ $(document).ready(function(){
         $("#curTime").text(secToMin(song["ctime"]))
         ctime = parseInt(song["ctime"])
         var cfile = parseInt(song["cfile"])
-
+        if(stime != 0){
+            playing = true
+        }
         //Load init jplayer
         $("#player-1").jPlayer({
             ready: function () {
@@ -146,9 +149,15 @@ function endSong() {
     });
     console.log("Set Player1 to load song /queue/ns" + cs.toString() + ".mp3 in the background")
     window.clearInterval(songProg)
+    if($(".item").length > 9) {
+        $(".req-button").prop("disabled", true);
+    }else{
+        $(".req-button").prop("disabled", false);
+    }
 }
 
 function startSong(song) {
+    playing = true
     $("#queue").find("div:first").remove();
     $("#npArt").attr("src", song["Cover"])
     $("#npSong").text(song["Title"])
@@ -181,8 +190,19 @@ function updateSong() {
         ctime++
         $("#curTime").text(secToMin(ctime))
         $("#songProgress").css("width", (100 * parseInt(ctime)/parseInt(stime)).toString() + "%")
+    }else{
+        playing = false
+        if($(".item").length > 9) {
+            $(".req-button").prop("disabled", true);
+        }else{
+            $(".req-button").prop("disabled", false);
+        }
     }
-
+    //Limit this to the maximum amount of time you think it would take
+    //for the server to transcode a single song
+    if(stime - ctime < 15 && $(".item").length == 0 && playing){
+        $(".req-button").prop("disabled", true);
+    }
 }
 
 function randString() {
