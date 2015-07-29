@@ -3,24 +3,26 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"github.com/hoisie/web"
+	"os"
 )
 
 const musicDir string = "/home/eumen/Music"
 
 func main() {
-	songs := startUp()
-	shuffle(songs)
-	subset := songs[:20]
+	startUp()
 
 	h := newHub()
 	go h.run()
 
 	q := newQueue()
 
+	l := newLibrary()
+	subset := l.selection()
+
 	//Control song transitions -- During this time, update the websockets and notify clients
 	utaChan := make(chan string)
 	reChan := make(chan string)
-	go handleSongs(utaChan, reChan, songs, h, q)
+	go handleSongs(utaChan, reChan, l, h, q)
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
@@ -54,4 +56,10 @@ func main() {
 	})
 
 	web.Run("0.0.0.0:8080")
+}
+
+func startUp() {
+	os.Remove("static/queue/ns1.mp3")
+	os.Remove("static/queue/ns2.mp3")
+	os.Remove("static/queue/next.mp3")
 }

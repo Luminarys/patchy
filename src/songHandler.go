@@ -3,13 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fhs/gompd/mpd"
-	"os"
 	"strconv"
 	"time"
 )
 
-func handleSongs(utaChan chan string, reChan chan string, library []mpd.Attrs, h *hub, q *queue) {
+func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q *queue) {
 	ctChan := make(chan int)
 	started := false
 	lastTime := 0
@@ -88,64 +86,35 @@ func handleSongs(utaChan chan string, reChan chan string, library []mpd.Attrs, h
 					ctChan <- 0
 					ctime := <-ctChan
 					if len(q.queue) != 0 || q.np.Length-ctime > 15 {
-						search(req, h, utaChan, library, q, started)
+						search(req, h, utaChan, l, q, started)
 					}
 				} else {
-					search(req, h, utaChan, library, q, started)
+					search(req, h, utaChan, l, q, started)
 				}
 			}
 		}
 	}
 }
 
-func search(req map[string]string, h *hub, utaChan chan string, songs []mpd.Attrs, q *queue, playing bool) {
-	for _, song := range songs {
-		if song["Title"] == req["Title"] && (song["Album"] == req["Album"] || song["Artist"] == req["Artist"]) {
-			fmt.Println("Found song: " + song["file"])
-			st, err := strconv.Atoi(song["Time"])
-			if err != nil {
-				fmt.Println("Couldn't add song due to time conversion error!")
-				break
-			}
-			q.add(&qsong{Title: song["Title"], Album: song["Album"], Artist: song["Artist"], Length: st, File: song["file"]})
+func search(req map[string]string, h *hub, utaChan chan string, l *library, q *queue, playing bool) {
+	song, err := l.reqSearch(req["Title"], req["Album"], req["Artist"])
+	if err != nil {
+		fmt.Println("Couldn't add request error: " + err.Error())
+	} else {
+		q.add(song)
+		msg := map[string]string{"cmd": "queue", "Title": song.Title, "Artist": song.Artist}
+		jsonMsg, _ := json.Marshal(msg)
+		h.broadcast <- []byte(jsonMsg)
 
-			msg := map[string]string{"cmd": "queue", "Title": song["Title"], "Artist": song["Artist"]}
-			jsonMsg, _ := json.Marshal(msg)
-			h.broadcast <- []byte(jsonMsg)
-
-			if len(q.queue) == 1 {
-				if !playing {
-					go func() {
-						q.transcodeNext()
-						utaChan <- "ns"
-					}()
-				} else {
-					go q.transcodeNext()
-				}
+		if len(q.queue) == 1 {
+			if !playing {
+				go func() {
+					q.transcodeNext()
+					utaChan <- "ns"
+				}()
+			} else {
+				go q.transcodeNext()
 			}
-			break
 		}
 	}
-}
-
-func startUp() (library []mpd.Attrs) {
-	var conn *mpd.Client
-
-	fmt.Println("Connecting to MPD")
-	conn, err := mpd.Dial("tcp", "127.0.0.1:6600")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	songs, err := conn.ListAllInfo("/")
-	if err != nil {
-		fmt.Println("Error: could not connect to MPD, exiting")
-		os.Exit(1)
-	}
-	os.Remove("static/queue/ns1.mp3")
-	os.Remove("static/queue/ns2.mp3")
-	os.Remove("static/queue/next.mp3")
-	return songs
 }

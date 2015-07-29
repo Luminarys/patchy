@@ -35,10 +35,10 @@ static/js/%.js: scripts/%.coffee
 
 static: $(STYLES) $(SCRIPTS) $(IMAGES)
 	@mkdir -p static/queue/
-	go build -o patchy src/main.go src/hub.go src/conn.go src/transcoder.go src/mpd.go src/util.go src/getHandling.go src/queue.go src/timer.go
+	go build -o patchy src/main.go src/hub.go src/conn.go src/transcoder.go src/songHandler.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go
 
 run: $(STYLES) $(SCRIPTS) $(IMAGES)
-	go run src/main.go src/hub.go src/conn.go src/transcoder.go src/mpd.go src/util.go src/getHandling.go src/queue.go src/timer.go
+	go run src/main.go src/hub.go src/conn.go src/transcoder.go src/mpd.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go
 
 all: static
 	echo $(STYLES)
