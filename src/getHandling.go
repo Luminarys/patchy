@@ -95,15 +95,15 @@ func getSong(ctx *web.Context, song string) string {
 	return ""
 }
 
-func getNowPlaying(ctx *web.Context, utaChan chan string, queue *queue) string {
+func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, queue *queue) string {
 	song := make(map[string]string)
 
 	if np := queue.np; np != nil {
 		utaChan <- "ctime"
-		ctime := <-utaChan
+		ctime := <-reChan
 
 		utaChan <- "cfile"
-		cfile := <-utaChan
+		cfile := <-reChan
 
 		song["Title"] = np.Title
 		song["Artist"] = np.Artist

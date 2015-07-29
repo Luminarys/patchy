@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
+func handleSongs(utaChan chan string, reChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 	ctChan := make(chan int)
 	started := false
 	lastTime := 0
@@ -29,7 +29,7 @@ func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 			//Let clients know that the current song is done and that we'll be pausing.
 			//Also give them info about the next song to be played
 			//During this time, clients that have not done so will transfer from livestream to downloads
-			msg := map[string]string{"cmd": "done", "Title": ns.Title, "Artist": ns.Artist, "Album": ns.Album, "Cover": "/art/" + GetAlbumDir(ns.File), "Time": strconv.Itoa(ns.Length)}
+			msg := map[string]string{"cmd": "done"}
 			lastTime = ns.Length
 			jsonMsg, _ := json.Marshal(msg)
 			h.broadcast <- []byte(jsonMsg)
@@ -38,7 +38,7 @@ func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 			time.Sleep(2000 * time.Millisecond)
 
 			//Tell clients to begin the song
-			msg = map[string]string{"cmd": "NS"}
+			msg = map[string]string{"cmd": "NS", "Title": ns.Title, "Artist": ns.Artist, "Album": ns.Album, "Cover": "/art/" + GetAlbumDir(ns.File), "Time": strconv.Itoa(ns.Length)}
 			jsonMsg, _ = json.Marshal(msg)
 			h.broadcast <- []byte(jsonMsg)
 			go timer(ns.Length, utaChan, ctChan)
@@ -46,7 +46,7 @@ func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 
 		//Get current song file in use
 		if msg == "cfile" {
-			utaChan <- strconv.Itoa(q.CFile)
+			reChan <- strconv.Itoa(q.CFile)
 		}
 
 		//If a song just finished, load in the next thing from queue if available
@@ -62,10 +62,10 @@ func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 		if msg == "ctime" {
 			if started {
 				ctChan <- 0
-				utaChan <- strconv.Itoa(<-ctChan)
+				reChan <- strconv.Itoa(<-ctChan)
 			} else {
 				//We want to actually do 100% here, do it later >.>
-				utaChan <- strconv.Itoa(lastTime)
+				reChan <- strconv.Itoa(lastTime)
 			}
 		}
 
@@ -84,7 +84,6 @@ func handleSongs(utaChan chan string, library []mpd.Attrs, h *hub, q *queue) {
 		//Handles requests
 		if isJSON(msg) {
 			var req map[string]string
-
 			if err := json.Unmarshal([]byte(msg), &req); err != nil {
 				fmt.Println("Error, couldn't unmarshal client request")
 			} else {

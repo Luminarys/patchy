@@ -106,17 +106,16 @@ $(document).ready(function(){
         var cmd = JSON.parse(evt.data)
         //Update now playing
         if(cmd["cmd"] == "done"){
-            newSong(cmd)
+            endSong()
         }
         //Pause over, start next song
         if(cmd["cmd"] == "NS"){
-            startSong()
+            startSong(cmd)
         }
         if(cmd["cmd"] == "queue"){
             updateQueue(cmd)
         }
     }
-
 });
 
 function updateQueue(song) {
@@ -128,7 +127,7 @@ function updateQueue(song) {
     }
 }
 
-function newSong(song) {
+function endSong() {
     $("#player-1").jPlayer("stop")
 
     var cs = $("#cs").attr("val")
@@ -146,11 +145,11 @@ function newSong(song) {
             mp3: cf
     });
     console.log("Set Player1 to load song /queue/ns" + cs.toString() + ".mp3 in the background")
-
     window.clearInterval(songProg)
+}
 
+function startSong(song) {
     $("#queue").find("div:first").remove();
-
     $("#npArt").attr("src", song["Cover"])
     $("#npSong").text(song["Title"])
     $("#npArtist").text(song["Artist"])
@@ -161,9 +160,6 @@ function newSong(song) {
 
     stime = parseInt(song["Time"])
     ctime = 0
-}
-
-function startSong() {
     $("#player-1").jPlayer("play")
     console.log("Set Player1 to start playing song")
     songProg = window.setInterval(updateSong, 1000);

@@ -19,7 +19,8 @@ func main() {
 
 	//Control song transitions -- During this time, update the websockets and notify clients
 	utaChan := make(chan string)
-	go handleSongs(utaChan, songs, h, q)
+	reChan := make(chan string)
+	go handleSongs(utaChan, reChan, songs, h, q)
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
@@ -34,7 +35,7 @@ func main() {
 
 	//Returns the JSON info for the currently playing song
 	web.Get("/np", func(ctx *web.Context) string {
-		return getNowPlaying(ctx, utaChan, q)
+		return getNowPlaying(ctx, utaChan, reChan, q)
 	})
 
 	//Handle the websocket
