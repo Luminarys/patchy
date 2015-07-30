@@ -2,7 +2,7 @@
 
 An online jukebox by [Luminarys](https://github.com/Luminarys), [minus](https://github.com/minus7), and [SirCmpwn](https://github.com/SirCmpwn).
 
-![](https://fuwa.se/s5kxoe.png)
+![](https://fuwa.se/pip1tc.png)
 
 #Requirements
 Patchy requires Go and mpd. You'll want to run `go get github.com/fhs/gompd/mpd` to grab the library that's used to interface mpd.
