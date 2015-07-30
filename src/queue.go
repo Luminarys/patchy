@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type qsong struct {
 	Title  string
@@ -57,21 +60,18 @@ func (q *queue) add(s *qsong) {
 
 //Transcodes the next appropriate song
 func (q *queue) transcodeNext() {
-	l := len(q.queue)
-	switch {
-	case l == 1:
-		transcode(musicDir + "/" + q.queue[0].File)
-	case l > 1:
-		transcode(musicDir + "/" + q.queue[1].File)
-	}
+	fmt.Println("Transcoding Song: ", q.queue[0].File)
+	transcode(musicDir + "/" + q.queue[0].File)
 	//Rename to opposite of current file, since the clients will be told to go
 	//to the next song after this
 	//Transcodes will happen BEFORE consumes(need to create the file for client use)
 	//if there is only one thing in the queue
 	//other wise transcodes occur afterwards(since you want to transcodein background)
 	if q.CFile == 1 {
+		fmt.Println("Renaming Song to ns2.mp3")
 		os.Rename("static/queue/next.mp3", "static/queue/ns2.mp3")
 	} else {
+		fmt.Println("Renaming Song to ns1.mp3")
 		os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
 	}
 }

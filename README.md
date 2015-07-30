@@ -21,5 +21,7 @@ Run `./patchy`, and you should be good to go. Please note that it currently must
 * Client music uploads
 
 #Things to Do:
+* Mitigate constantly dropping WS conns
+* Fix font errors for Windows to Linux ULs
 * Deuglify stuff
 * Equalizer(?)

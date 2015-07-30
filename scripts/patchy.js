@@ -6,7 +6,7 @@ var playing = false
 $(document).ready(function(){
 
     //Initialize Websocket
-    conn = new WebSocket("ws:///localhost:8080/ws");
+    conn = new WebSocket("ws://localhost:8080/ws");
 
     //Load now playing
     $.get("/np", function(data) {
@@ -71,6 +71,7 @@ $(document).ready(function(){
 
     conn.onclose = function(evt) {
         console.log("WS closed")
+        conn = WebSocket("ws://localhost:8080/ws");
     }
     conn.onmessage = function(evt) {
         console.log(evt.data)

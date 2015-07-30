@@ -21,6 +21,7 @@ func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q 
 			//Consume item in queue, if there's anything left, initiate a transcode
 			ns = q.consume()
 			if len(q.queue) > 0 {
+				fmt.Println("Queue has more than one item, performing next transcode in background")
 				go q.transcodeNext()
 			}
 			lastTime = ns.Length
@@ -110,9 +111,11 @@ func search(req map[string]string, h *hub, utaChan chan string, l *library, q *q
 
 		if len(q.queue) == 1 {
 			if !playing {
+				fmt.Println("Queue has only one item, performing transcode and sending ns")
 				q.transcodeNext()
 				utaChan <- "ns"
 			} else {
+				fmt.Println("Queue has only one item, performing transcode")
 				go q.transcodeNext()
 			}
 		}
