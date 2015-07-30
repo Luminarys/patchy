@@ -1,25 +1,25 @@
-# Patchy
-
-**Work in progress, do not use.**
+#Patchy
 
 An online jukebox by [Luminarys](https://github.com/Luminarys), [minus](https://github.com/minus7), and [SirCmpwn](https://github.com/SirCmpwn).
 
-![](http://i.imgur.com/LIUu8HZ.png)
+![](https://fuwa.se/s5kxoe.png)
 
-Usage instructions to come once this software is more mature.
+#Requirements
+Patchy requires Go and mpd. You'll want to run `go get github.com/fhs/gompd/mpd` to grab the library that's used to interface mpd.
 
-#Things Done:
-* Load in music library
-* Setup websockets
-* Update Now Playing using websocket
-* Implement the music timer properly 
-* Implement proper music sync -- Use a dual jPlayer setup where one player loads the next song while the other plays the song it prev. loaded
-* Implement the Queue properly
-* Implement client requests
-* Implement library searching
-* Implement now listening counter
+#Setup
+First setup mpd properly on your machine. It just has to point to be told where your music directory is and given some interface to play into. This can be a dummy interface for a headless server or something like an http stream. 
+Then modify src/main.go and change the musicDir variable to point to your mpd music directory. You can then run `make` to compile all assets and generate the binary. 
+
+#Running
+Run `./patchy`, and you should be good to go. Please note that it currently must be run from within the git repo or else it will not work.
+
+#Features:
+* Music library searching
+* Precise stream synchronization via websockets
+* Client queue requests
+* Client music uploads
 
 #Things to Do:
-* Implement client music uploads
 * Deuglify stuff
 * Equalizer(?)
