@@ -55,6 +55,11 @@ func main() {
 		return getQueue(ctx, q)
 	})
 
+	//Returns the current queue
+	web.Post("/upload", func(ctx *web.Context) string {
+		return handleUpload(ctx, l)
+	})
+
 	web.Run("0.0.0.0:8080")
 }
 

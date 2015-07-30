@@ -27,11 +27,12 @@
     your/local/music/ \
     url.tbd:/var/music/</pre>
                 <p>otherwise:</p>
-                <form class="form">
-                    <input type="file" id="upload-file" class="hidden" />
-                    <div class="drop-target">Drag and drop</div>
+                <form id="ulform" class="form">
+                    <input type="file" accept="application/zip" id="upload-file" class="hidden" />
+                    <div id="dropzone" class="drop-target">Drag and drop</div>
                 </form>
-                <p class="text-center" style="margin-top: 10px;"><a href="#">or click here</a></p>
+                <p class="text-center" id="droplink" style="margin-top: 10px;"><a href="#">or click here</a></p>
+                <button id="upload-button" class="btn btn-primary btn-block">Upload</button>
             </div>
             <div class="search">
                 <h1>Request Tunes</h1>

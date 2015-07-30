@@ -76,7 +76,7 @@ func (l *library) asyncSearch(req string) []mpd.Attrs {
 }
 
 //Updates the library
-func (l *library) updateLibrary() error {
+func (l *library) update() error {
 	var conn *mpd.Client
 
 	fmt.Println("Connecting to MPD")

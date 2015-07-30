@@ -118,7 +118,34 @@ $(document).ready(function(){
             });
         }
     });
+    var form = document.getElementById("ulform");
+    var fs = document.getElementById("upload-file");
+    form.onsubmit = function(event) {
+        var file = fs.files[0]
+        var formData = new FormData();
+        formData.append("file", file, file.name);
+        var request = $.ajax({
+            url: "/upload",
+            type: "POST",
+            async: true,
+            data: formData,
+            processData: false,
+            contentType: false,
+            complete: function(jqXHR, status) {
+                var resp = jqXHR.responseText
+                alert(resp)
+            }
+        });
+    }
+    $("#droplink").click(function() {
+        $("#upload-file").click()
+    });
+    $("#upload-button").click(function() {
+        form.submit();
+        $("#ulform").submit();
+    })
 });
+
 
 function fillSearchRes(data) {
     var songs = JSON.parse(data)
