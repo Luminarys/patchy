@@ -1,6 +1,6 @@
 static
 .sass-cache
-*.swap
+*.sw*
 tenshi
 patchy
 temp
