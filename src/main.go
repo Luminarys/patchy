@@ -2,16 +2,43 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/hoisie/web"
 	"os"
 )
 
-const musicDir string = "/home/eumen/Music"
+var settings struct {
+	MusicDir   string `json:"music_dir"`
+	Port       string `json:"port"`
+	ServerName string `json:"server_name"`
+}
+
+var musicDir string
+var serverName string
 
 func main() {
-	port := flag.String("port", "8080", "The port that patchy listens on.")
+
+	configFile, err := os.Open("patchy.conf")
+	if err != nil {
+		fmt.Println("Couldn't open conf file!")
+		os.Exit(1)
+	}
+
+	jsonParser := json.NewDecoder(configFile)
+	if err = jsonParser.Decode(&settings); err != nil {
+		fmt.Println("Couldn't parse conf file!", err.Error())
+		os.Exit(1)
+	}
+
+	port := flag.String("port", settings.Port, "The port that patchy listens on.")
+	musicDirFlag := flag.String("mdir", settings.MusicDir, "The full filepath to the mpd library location.")
+	serverNameFlag := flag.String("name", settings.ServerName, "The FQDN of the server.")
 	flag.Parse()
+
+	musicDir = *musicDirFlag
+	serverName = *serverNameFlag
 
 	startUp()
 
