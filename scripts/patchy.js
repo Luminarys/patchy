@@ -182,6 +182,7 @@ function fillSearchRes(data) {
             var req = {}
             var block = $(this).parent().parent()
             console.log(block)
+            req["cmd"] = "req"
             req["Title"] = $(block).attr("title")
             req["Artist"] = $(block).attr("artist")
             req["Album"] = $(block).attr("album")
@@ -270,11 +271,6 @@ function updateSong() {
         }else{
             $(".req-button").prop("disabled", false);
         }
-    }
-    //Limit this to the maximum amount of time you think it would take
-    //for the server to transcode a single song
-    if(stime - ctime < 15 && $(".item").length == 0 && playing){
-        $(".req-button").prop("disabled", true);
     }
 }
 

@@ -16,16 +16,23 @@ type qsong struct {
 type queue struct {
 	// Queue.
 	queue []*qsong
-	np    *qsong
+	//Current playing song
+	np *qsong
+	//Current file in use
 	CFile int
+	//Transcoding status
+	transcoding bool
+	//Playing status
+	playing bool
 }
 
 //Create a new queue
 func newQueue() *queue {
 	return &queue{
-		queue: make([]*qsong, 0),
-		CFile: 1,
-		np:    nil,
+		queue:       make([]*qsong, 0),
+		CFile:       1,
+		np:          nil,
+		transcoding: false,
 	}
 }
 
@@ -61,6 +68,7 @@ func (q *queue) add(s *qsong) {
 //Transcodes the next appropriate song
 func (q *queue) transcodeNext() {
 	fmt.Println("Transcoding Song: ", q.queue[0].File)
+	q.transcoding = true
 	transcode(musicDir + "/" + q.queue[0].File)
 	//Rename to opposite of current file, since the clients will be told to go
 	//to the next song after this
@@ -74,4 +82,5 @@ func (q *queue) transcodeNext() {
 		fmt.Println("Renaming Song to ns1.mp3")
 		os.Rename("static/queue/next.mp3", "static/queue/ns1.mp3")
 	}
+	q.transcoding = false
 }

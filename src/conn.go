@@ -2,6 +2,8 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"encoding/json"
+	"fmt"
 )
 
 type connection struct {
@@ -16,6 +18,9 @@ type connection struct {
 
 	// The channel for interfacing with the song/mpd handler
 	utaChan chan string
+
+	// The channel for passing requests
+	requests chan *request
 }
 
 //Reads in requests from the clients and sends them to the song handler
@@ -25,7 +30,15 @@ func (c *connection) reader() {
 		if err := websocket.Message.Receive(c.ws, &msg); err != nil {
 			break
 		}
-		c.utaChan <- msg
+		var req map[string]string
+		if err := json.Unmarshal([]byte(msg), &req); err != nil {
+			fmt.Println("Error, couldn't unmarshal client request")
+		} else {
+			fmt.Println("Received: ", req)
+			if req["cmd"] == "req" {
+				c.requests <- &request{Title: req["Title"], Album: req["Album"], Artist: req["Artist"]}
+			}
+		}
 	}
 	c.ws.Close()
 }
@@ -42,8 +55,8 @@ func (c *connection) writer() {
 }
 
 //Socket handler -- Creates a new connection for each client
-func handleSocket(ws *websocket.Conn, hub *hub, utaChan chan string) {
-	c := &connection{send: make(chan []byte, 256), ws: ws, h: hub, utaChan: utaChan}
+func handleSocket(ws *websocket.Conn, hub *hub, utaChan chan string, requests chan *request) {
+	c := &connection{send: make(chan []byte, 256), ws: ws, h: hub, utaChan: utaChan, requests: requests}
 	c.h.register <- c
 	defer func() { c.h.unregister <- c }()
 	go c.writer()

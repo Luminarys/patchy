@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"flag"
 	"github.com/hoisie/web"
 	"os"
 )
@@ -9,6 +10,9 @@ import (
 const musicDir string = "/home/eumen/Music"
 
 func main() {
+	port := flag.String("port", "8080", "The port that patchy listens on.")
+	flag.Parse()
+
 	startUp()
 
 	h := newHub()
@@ -23,6 +27,9 @@ func main() {
 	utaChan := make(chan string)
 	reChan := make(chan string)
 	go handleSongs(utaChan, reChan, l, h, q)
+
+	requests := make(chan *request)
+	go handleRequests(requests, utaChan, q, l, h)
 
 	//Searches for cover image
 	web.Get("/art/(.+)", getCover)
@@ -42,7 +49,7 @@ func main() {
 
 	//Handle the websocket
 	web.Websocket("/ws", websocket.Handler(func(ws *websocket.Conn) {
-		handleSocket(ws, h, utaChan)
+		handleSocket(ws, h, utaChan, requests)
 	}))
 
 	//Returns a library sample for initial client display
@@ -60,7 +67,7 @@ func main() {
 		return handleUpload(ctx, l)
 	})
 
-	web.Run("0.0.0.0:8080")
+	web.Run("0.0.0.0:" + *port)
 }
 
 func startUp() {
