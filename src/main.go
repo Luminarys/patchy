@@ -18,7 +18,7 @@ var musicDir string
 
 func main() {
 
-	configFile, err := os.Open("patchy.conf")
+	configFile, err := os.Open("conf/patchy.conf")
 	if err != nil {
 		fmt.Println("Couldn't open conf file!")
 		os.Exit(1)
