@@ -4,9 +4,9 @@ var songProg
 var playing = false
 
 $(document).ready(function(){
-
+    var loc = window.location
     //Initialize Websocket
-    conn = new WebSocket("ws://localhost:8080/ws");
+    conn = new WebSocket("ws://" + loc.host + "/ws");
 
     //Load now playing
     $.get("/np", function(data) {

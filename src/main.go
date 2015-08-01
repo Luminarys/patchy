@@ -10,13 +10,11 @@ import (
 )
 
 var settings struct {
-	MusicDir   string `json:"music_dir"`
-	Port       string `json:"port"`
-	ServerName string `json:"server_name"`
+	MusicDir string `json:"music_dir"`
+	Port     string `json:"port"`
 }
 
 var musicDir string
-var serverName string
 
 func main() {
 
@@ -34,11 +32,9 @@ func main() {
 
 	port := flag.String("port", settings.Port, "The port that patchy listens on.")
 	musicDirFlag := flag.String("mdir", settings.MusicDir, "The full filepath to the mpd library location.")
-	serverNameFlag := flag.String("name", settings.ServerName, "The FQDN of the server.")
 	flag.Parse()
 
 	musicDir = *musicDirFlag
-	serverName = *serverNameFlag
 
 	startUp()
 
