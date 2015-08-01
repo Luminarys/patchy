@@ -24,6 +24,8 @@ type queue struct {
 	transcoding bool
 	//Playing status
 	playing bool
+	//Previously transcoded file -- Used to prevent dupes
+	pt string
 }
 
 //Create a new queue
@@ -33,6 +35,7 @@ func newQueue() *queue {
 		CFile:       1,
 		np:          nil,
 		transcoding: false,
+		pt:          "",
 	}
 }
 
@@ -67,6 +70,14 @@ func (q *queue) add(s *qsong) {
 
 //Transcodes the next appropriate song
 func (q *queue) transcodeNext() {
+	//Need a better way of doing this -- perhaps transfer
+	//From a nontranscoded queue to a transcoded queue?
+	if q.pt == q.queue[0].File {
+		fmt.Println("This song has already been transcoded!")
+		return
+	}
+	q.pt = q.queue[0].File
+
 	fmt.Println("Transcoding Song: ", q.queue[0].File)
 	q.transcoding = true
 	transcode(musicDir + "/" + q.queue[0].File)
