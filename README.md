@@ -19,9 +19,9 @@ Run `./patchy`, and you should be good to go. Please note that it currently must
 * Precise stream synchronization via websockets
 * Client queue requests
 * Client music uploads
+* Use a configuration file for stuff
 
 #Things to Do:
-* Use a configuration file for stuff
 * Fix font errors for Windows to Linux ULs
 * Deuglify stuff
 * Equalizer(?)

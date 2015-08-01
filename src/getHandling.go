@@ -108,8 +108,9 @@ func getNowPlaying(ctx *web.Context, utaChan chan string, reChan chan string, qu
 
 		song["ctime"] = "0"
 		song["cfile"] = "1"
-		song["listeners"] = strconv.Itoa(listeners)
 	}
+	song["listeners"] = strconv.Itoa(listeners)
+
 	jsonMsg, _ := json.Marshal(song)
 	return string(jsonMsg)
 }
