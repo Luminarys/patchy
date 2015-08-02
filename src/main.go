@@ -61,7 +61,7 @@ func main() {
 	web.Get("/queue/(.+)", getSong)
 
 	//Search for songs similar to a given title
-	web.Get("/search/(.+)", func(ctx *web.Context, req string) string {
+	web.Get("/search/(.*)", func(ctx *web.Context, req string) string {
 		return getSearchRes(ctx, req, l)
 	})
 

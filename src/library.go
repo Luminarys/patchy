@@ -41,7 +41,7 @@ func newLibrary() *library {
 
 //returns a small selection of songs for initial display
 func (l *library) selection() []mpd.Attrs {
-	return l.library[:20]
+	return l.library[:15]
 }
 
 //Searches for a request and returns the first song which matches
@@ -67,7 +67,7 @@ func (l *library) asyncSearch(req string) []mpd.Attrs {
 	for _, song := range l.library {
 		if strings.Contains(song["Title"], req) || strings.Contains(song["Album"], req) || strings.Contains(song["Artist"], req) {
 			res = append(res, song)
-			if len(res) == 20 {
+			if len(res) == 15 {
 				break
 			}
 		}

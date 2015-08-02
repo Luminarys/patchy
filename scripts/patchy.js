@@ -112,12 +112,10 @@ $(document).ready(function(){
         }
 
     }
-    $("#searchBar").keyup(function(event) {
-        if(event.which != '13') {
-            $.get("/search/" + $("#searchBar").val(), function(data) {
-                fillSearchRes(data)
-            });
-        }
+    $("#search-button").click(function() {
+        $.get("/search/" + $("#searchBar").val(), function(data) {
+            fillSearchRes(data)
+        });
     });
     var form = document.getElementById("ulform");
     var fs = document.getElementById("upload-file");
