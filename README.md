@@ -19,8 +19,8 @@ Run `./patchy` to start the server with the default options in patchy.conf.
 You may want to manually specify flags, run `./patchy -h` to see them.
 
 #Features:
+* Synchronized music streaming
 * Music library searching
-* Precise stream synchronization via websockets
 * Client queue requests
 * Client music uploads
 * Use a configuration file for stuff
