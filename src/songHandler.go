@@ -49,6 +49,7 @@ func handleSongs(utaChan chan string, reChan chan string, l *library, h *hub, q 
 
 				if len(q.queue) > 0 {
 					fmt.Println("Queue has more than one item, performing next transcode in background")
+					q.transcoding = true
 					go q.transcodeNext()
 				}
 			}()
@@ -107,6 +108,10 @@ func handleRequests(requests chan *request, utaChan chan string, q *queue, l *li
 			if len(q.queue) == 1 {
 				//This is safe to do because the loop guarentees that NS won't start until transcoding is finished
 				fmt.Println("Queue has only one item, performing transcode")
+				//Need a better way of doing this -- if we don't set q.transcoding to true prior to running the goroutine,
+				//the songhandler can begin the NS functions before the transcodenext is able to set transcoding to true,
+				//resulting in panics/errors
+				q.transcoding = true
 				go q.transcodeNext()
 				if !q.playing {
 					utaChan <- "ns"

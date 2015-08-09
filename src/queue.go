@@ -79,7 +79,9 @@ func (q *queue) transcodeNext() {
 	q.pt = q.queue[0].File
 
 	fmt.Println("Transcoding Song: ", q.queue[0].File)
-	q.transcoding = true
+	//We want to set this in whatever function calls transcodeNext because this
+	//function is always called as a goroutine
+	//q.transcoding = true
 	transcode(musicDir + "/" + q.queue[0].File)
 	//Rename to opposite of current file, since the clients will be told to go
 	//to the next song after this

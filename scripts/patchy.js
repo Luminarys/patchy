@@ -157,7 +157,6 @@ $(document).ready(function(){
             var value = slider.slider('value') - 2,
                 volume = $('.volume');
             var perc = value/100
-            console.log(perc) 
             $("#player-1").jPlayer("volume", perc)
 
             if(value <= 5) { 
