@@ -143,6 +143,38 @@ $(document).ready(function(){
         form.submit();
         $("#ulform").submit();
     })
+
+    //Initialize Volume stuff
+    var slider = $('#slider');
+    slider.slider();
+        slider.slider({
+        range: "min",
+        min: 1,
+        value: 35,
+ 
+        slide: function(event, ui) {
+ 
+            var value = slider.slider('value') - 2,
+                volume = $('.volume');
+            var perc = value/100
+            console.log(perc) 
+            $("#player-1").jPlayer("volume", perc)
+
+            if(value <= 5) { 
+                volume.css('background-position', '0 0')
+            } 
+            else if (value <= 25) {
+                volume.css('background-position', '0 -25px')
+            } 
+            else if (value <= 75) {
+                volume.css('background-position', '0 -50px')
+            } 
+            else {
+                volume.css('background-position', '0 -75px')
+            };
+ 
+        },
+    });
 });
 
 

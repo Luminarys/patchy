@@ -38,12 +38,12 @@ static/js/%.js: scripts/%.coffee
 	@mkdir -p static/js
 	coffee -m -o static/ -c $<
 
-static: $(STYLES) $(SCRIPTS) $(IMAGES) ${PAGES}
+static: $(STYLES) $(SCRIPTS) $(IMAGES) $(PAGES)
 	@mkdir -p static/queue/
 	@mkdir -p temp/
 	go build -o patchy src/main.go src/hub.go src/conn.go src/transcoder.go src/songHandler.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go src/uploadHandling.go
 
-run: $(STYLES) $(SCRIPTS) $(IMAGES) ${PAGES}
+run: $(STYLES) $(SCRIPTS) $(IMAGES) $(PAGES)
 	go run src/main.go src/hub.go src/conn.go src/transcoder.go src/mpd.go src/util.go src/getHandling.go src/queue.go src/timer.go src/library.go src/uploadHandling.go
 
 all: static
