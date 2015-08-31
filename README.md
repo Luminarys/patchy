@@ -27,6 +27,7 @@ You may want to manually specify flags, run `./patchy -h` to see them.
 
 #Things to Do:
 * Fix font errors for Windows to Linux ULs
+* Add in AFK auto DJ
 * Deuglify stuff -- Somewhat done, might want to redesign site though
 * Improve general code quality
 * Real abuse policy
